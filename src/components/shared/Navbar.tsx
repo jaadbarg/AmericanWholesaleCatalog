@@ -5,23 +5,40 @@ import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
-import { CartButton } from '@/components/products/CartButton'
+import { useCart } from '@/hooks/useCart'
+import { useState, useEffect } from 'react'
+import { isAdmin } from '@/lib/utils/adminUtils'
 
 export function Navbar() {
   const pathname = usePathname()
   const router = useRouter()
   const supabase = createClientComponentClient()
+  const clearCart = useCart((state) => state.clearCart)
+  const [userEmail, setUserEmail] = useState<string | null>(null)
+
+  useEffect(() => {
+    const getUser = async () => {
+      const { data: { session } } = await supabase.auth.getSession()
+      setUserEmail(session?.user?.email || null)
+    }
+    getUser()
+  }, [supabase])
 
   const handleSignOut = async () => {
-    await supabase.auth.signOut()
-    router.push('/auth/signin')
+    try {
+      await supabase.auth.signOut()
+      clearCart()
+      router.push('/auth/signin')
+    } catch (error) {
+      console.error('Error signing out:', error)
+    }
   }
 
   return (
     <motion.nav 
       initial={{ opacity: 0, y: -20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="fixed w-full z-50 bg-white/80 backdrop-blur-md border-b"
+      className="fixed top-8 left-0 right-0 z-40 bg-white/80 backdrop-blur-md border-b"
     >
       <div className="container mx-auto px-6">
         <div className="flex items-center justify-between h-16">
@@ -50,10 +67,21 @@ export function Navbar() {
             >
               Orders
             </Link>
+            {userEmail && isAdmin(userEmail) && (
+              <Link 
+                href="/admin/orders" 
+                className={`${
+                  pathname === '/admin/orders' 
+                    ? 'text-blue-900 font-medium' 
+                    : 'text-gray-600'
+                } hover:text-blue-900 transition-colors`}
+              >
+                Admin Panel
+              </Link>
+            )}
           </div>
 
           <div className="flex items-center space-x-4">
-            <CartButton />
             <motion.button
               onClick={handleSignOut}
               whileHover={{ scale: 1.05 }}
