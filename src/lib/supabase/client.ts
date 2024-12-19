@@ -10,51 +10,36 @@ if (!supabaseUrl || !supabaseAnonKey) {
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey)
 
-// Database Types
-export type Customer = {
-  id: string
-  name: string
-  email: string
-  created_at: string
-  updated_at: string
+// Helper function to get the current user's profile and customer data
+export async function getCurrentUserData() {
+  const { data: { session } } = await supabase.auth.getSession()
+  if (!session) {
+    console.log('No session found')
+    return null
+  }
+
+  console.log('User ID:', session.user.id)
+
+  const { data: profile, error: profileError } = await supabase
+    .from('profiles')
+    .select('*, customers(*)')
+    .eq('id', session.user.id)
+    .single()
+
+  if (profileError) {
+    console.error('Profile error:', profileError)
+    return null
+  }
+
+  console.log('Profile data:', profile)
+  return profile
 }
 
-export type Product = {
-  id: string
-  item_number: string
-  description: string
-  category: string | null
-  created_at: string
-  updated_at: string
-}
-
-export type Order = {
-  id: string
-  customer_id: string
-  status: string
-  created_at: string
-  updated_at: string
-  delivery_date: Date | null
-  notes: string | null
-}
-
-export type OrderItem = {
-  id: string
-  order_id: string
-  product_id: string
-  quantity: number
-  created_at: string
-}
-
-export type CustomerProduct = {
-  customer_id: string
-  product_id: string
-  created_at: string
-}
-
-// Helper function to fetch customer-specific products
+// Helper function to get customer-specific products
 export async function getCustomerProducts(customerId: string) {
-  const { data, error } = await supabase
+  console.log('Fetching products for customer:', customerId)
+
+  const { data: customerProducts, error: customerProductsError } = await supabase
     .from('customer_products')
     .select(`
       product_id,
@@ -67,41 +52,11 @@ export async function getCustomerProducts(customerId: string) {
     `)
     .eq('customer_id', customerId)
 
-  if (error) throw error
-  return data
-}
+  if (customerProductsError) {
+    console.error('Customer products error:', customerProductsError)
+    return []
+  }
 
-// Helper function to create an order with items
-export async function createOrder(
-  customerId: string,
-  items: { product_id: string; quantity: number }[],
-  deliveryDate?: Date,
-  notes?: string
-) {
-  const { data: order, error: orderError } = await supabase
-    .from('orders')
-    .insert({
-      customer_id: customerId,
-      status: 'pending',
-      delivery_date: deliveryDate,
-      notes: notes
-    })
-    .select()
-    .single()
-
-  if (orderError) throw orderError
-
-  const orderItems = items.map(item => ({
-    order_id: order.id,
-    product_id: item.product_id,
-    quantity: item.quantity
-  }))
-
-  const { error: itemsError } = await supabase
-    .from('order_items')
-    .insert(orderItems)
-
-  if (itemsError) throw itemsError
-
-  return order
+  console.log('Customer products data:', customerProducts)
+  return customerProducts?.map(item => item.products) || []
 }
