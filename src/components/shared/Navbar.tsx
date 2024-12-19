@@ -8,6 +8,7 @@ import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
 import { useCart } from '@/hooks/useCart'
 import { useState, useEffect } from 'react'
 import { isAdmin } from '@/lib/utils/adminUtils'
+import { CartButton } from '@/components/products/CartButton'
 
 export function Navbar() {
   const pathname = usePathname()
@@ -33,6 +34,8 @@ export function Navbar() {
       console.error('Error signing out:', error)
     }
   }
+
+  const isAdminUser = userEmail && isAdmin(userEmail)
 
   return (
     <motion.nav 
@@ -67,7 +70,7 @@ export function Navbar() {
             >
               Orders
             </Link>
-            {userEmail && isAdmin(userEmail) && (
+            {isAdminUser && (
               <Link 
                 href="/admin/orders" 
                 className={`${
@@ -82,6 +85,7 @@ export function Navbar() {
           </div>
 
           <div className="flex items-center space-x-4">
+            {!isAdminUser && <CartButton />}
             <motion.button
               onClick={handleSignOut}
               whileHover={{ scale: 1.05 }}
