@@ -146,7 +146,23 @@ export default function OrderForm() {
               />
             </div>
     
-            {/* ... rest of the form remains the same ... */}
+            <div>
+                <label 
+                htmlFor="notes" 
+                className="block text-sm font-medium text-gray-700 mb-1"
+            >
+                Order Notes
+            </label>
+            <textarea
+                id="notes"
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                rows={3}
+                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                placeholder="Any special instructions for your order?"
+            />
+            </div>
+           
     
             <motion.button
               type="submit"

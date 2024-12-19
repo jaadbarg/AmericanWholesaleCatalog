@@ -1,7 +1,6 @@
 // src/app/(protected)/dashboard/orders/page.tsx
 import { createServerComponentClient } from '@supabase/auth-helpers-nextjs'
 import { cookies } from 'next/headers'
-import { format } from 'date-fns'
 import OrderDetails from '@/components/orders/OrderDetails'
 
 export default async function OrdersPage() {
