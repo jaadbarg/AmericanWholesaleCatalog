@@ -45,31 +45,35 @@ export function Navbar() {
     >
       <div className="container mx-auto px-6">
         <div className="flex items-center justify-between h-16">
-          <Link href="/products" className="font-bold text-xl text-blue-900">
+          <Link href={isAdminUser ? "/admin/orders" : "/products"} className="font-bold text-xl text-blue-900">
             American Wholesalers
           </Link>
           
           <div className="hidden md:flex items-center space-x-8">
-            <Link 
-              href="/products" 
-              className={`${
-                pathname === '/products' 
-                  ? 'text-blue-900 font-medium' 
-                  : 'text-gray-600'
-              } hover:text-blue-900 transition-colors`}
-            >
-              Products
-            </Link>
-            <Link 
-              href="/dashboard/orders" 
-              className={`${
-                pathname === '/dashboard/orders' 
-                  ? 'text-blue-900 font-medium' 
-                  : 'text-gray-600'
-              } hover:text-blue-900 transition-colors`}
-            >
-              Orders
-            </Link>
+            {!isAdminUser && (
+              <>
+                <Link 
+                  href="/products" 
+                  className={`${
+                    pathname === '/products' 
+                      ? 'text-blue-900 font-medium' 
+                      : 'text-gray-600'
+                  } hover:text-blue-900 transition-colors`}
+                >
+                  Products
+                </Link>
+                <Link 
+                  href="/dashboard/orders" 
+                  className={`${
+                    pathname === '/dashboard/orders' 
+                      ? 'text-blue-900 font-medium' 
+                      : 'text-gray-600'
+                  } hover:text-blue-900 transition-colors`}
+                >
+                  Orders
+                </Link>
+              </>
+            )}
             {isAdminUser && (
               <Link 
                 href="/admin/orders" 
