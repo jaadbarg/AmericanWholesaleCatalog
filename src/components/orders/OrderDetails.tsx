@@ -4,7 +4,6 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { ChevronDown, Package } from 'lucide-react'
-import { format } from 'date-fns'
 
 type OrderItem = {
   id: string
@@ -60,7 +59,10 @@ export default function OrderDetails({ order }: { order: Order }) {
               Order #{order.id.slice(0, 8)}...
             </p>
             <p className="text-sm text-gray-500">
-              Placed on {format(new Date(order.created_at), 'MMM d, yyyy')}
+              Placed on {new Date(order.created_at).toLocaleDateString()}
+            </p>
+            <p className="text-sm text-gray-500">
+              Delivery: {new Date(order.delivery_date).toLocaleDateString()}
             </p>
           </div>
         </div>
@@ -85,13 +87,6 @@ export default function OrderDetails({ order }: { order: Order }) {
       >
         <div className="p-4 border-t">
           <div className="space-y-4">
-            <div>
-              <h3 className="text-sm font-medium text-gray-900">Delivery Date</h3>
-              <p className="text-sm text-gray-500">
-                {format(new Date(order.delivery_date), 'MMMM d, yyyy')}
-              </p>
-            </div>
-
             <div>
               <h3 className="text-sm font-medium text-gray-900">Items</h3>
               <ul className="mt-2 divide-y divide-gray-200">

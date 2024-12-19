@@ -7,12 +7,13 @@ import { motion } from 'framer-motion'
 import { Check, X, ChevronDown } from 'lucide-react'
 
 type OrderItem = {
+  id: string
   quantity: number
   products: {
     id: string
     item_number: string
     description: string
-  }
+  } | null
 }
 
 type Order = {
@@ -24,7 +25,7 @@ type Order = {
   customers: {
     name: string
     email: string
-  }
+  } | null
   order_items: OrderItem[]
 }
 
@@ -40,7 +41,6 @@ export default function AdminOrderList({ initialOrders }: { initialOrders: Order
     setError(null)
 
     try {
-      // Update the order status
       const { error: updateError } = await supabase
         .from('orders')
         .update({ 
@@ -51,20 +51,18 @@ export default function AdminOrderList({ initialOrders }: { initialOrders: Order
 
       if (updateError) throw updateError
 
-      // Find the order that was just updated
-      const updatedOrder = orders.find(o => o.id === orderId)
-      if (!updatedOrder) throw new Error('Order not found')
-
-      // Send confirmation email (this would be handled by your email service)
-      // For now, we'll just log it
-      console.log(`Email would be sent to ${updatedOrder.customers.email}:
-        Subject: Order ${newStatus === 'confirmed' ? 'Confirmed' : 'Cancelled'}
-        Order ID: ${orderId}
-        Delivery Date: ${new Date(updatedOrder.delivery_date).toLocaleDateString()}
-      `)
-
-      // Update local state to remove the processed order
+      // Update local state
       setOrders(orders.filter(order => order.id !== orderId))
+
+      // Find the order for email notification
+      const updatedOrder = orders.find(o => o.id === orderId)
+      if (updatedOrder?.customers?.email) {
+        console.log(`Email would be sent to ${updatedOrder.customers.email}:
+          Status: Order ${newStatus}
+          Order ID: ${orderId}
+          Delivery Date: ${new Date(updatedOrder.delivery_date).toLocaleDateString()}
+        `)
+      }
 
     } catch (e) {
       console.error('Error processing order:', e)
@@ -98,8 +96,12 @@ export default function AdminOrderList({ initialOrders }: { initialOrders: Order
               <div className="flex items-center justify-between">
                 <div>
                   <h3 className="font-medium">Order #{order.id.slice(0, 8)}...</h3>
-                  <p className="text-sm text-gray-500">{order.customers.name}</p>
-                  <p className="text-sm text-gray-500">{order.customers.email}</p>
+                  {order.customers && (
+                    <>
+                      <p className="text-sm text-gray-500">{order.customers.name}</p>
+                      <p className="text-sm text-gray-500">{order.customers.email}</p>
+                    </>
+                  )}
                   <p className="text-sm text-gray-500">
                     Delivery: {new Date(order.delivery_date).toLocaleDateString()}
                   </p>
@@ -145,9 +147,15 @@ export default function AdminOrderList({ initialOrders }: { initialOrders: Order
                 <div className="mt-4 border-t pt-4">
                   <h4 className="font-medium mb-2">Order Items:</h4>
                   <ul className="space-y-2">
-                    {order.order_items.map((item, index) => (
-                      <li key={index} className="text-sm">
-                        {item.quantity}x {item.products.item_number} - {item.products.description}
+                    {order.order_items.map((item) => (
+                      <li key={item.id} className="text-sm">
+                        {item.products ? (
+                          <>
+                            {item.quantity}x {item.products.item_number} - {item.products.description}
+                          </>
+                        ) : (
+                          <span className="text-gray-500">Product information not available</span>
+                        )}
                       </li>
                     ))}
                   </ul>
