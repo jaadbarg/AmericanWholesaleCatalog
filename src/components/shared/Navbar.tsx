@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
+import { CartButton } from '@/components/products/CartButton'
 
 export function Navbar() {
   const pathname = usePathname()
@@ -28,7 +29,7 @@ export function Navbar() {
             American Wholesalers
           </Link>
           
-          <div className="hidden md:flex space-x-8">
+          <div className="hidden md:flex items-center space-x-8">
             <Link 
               href="/products" 
               className={`${
@@ -40,9 +41,9 @@ export function Navbar() {
               Products
             </Link>
             <Link 
-              href="/orders" 
+              href="/dashboard/orders" 
               className={`${
-                pathname === '/orders' 
+                pathname === '/dashboard/orders' 
                   ? 'text-blue-900 font-medium' 
                   : 'text-gray-600'
               } hover:text-blue-900 transition-colors`}
@@ -52,6 +53,7 @@ export function Navbar() {
           </div>
 
           <div className="flex items-center space-x-4">
+            <CartButton />
             <motion.button
               onClick={handleSignOut}
               whileHover={{ scale: 1.05 }}

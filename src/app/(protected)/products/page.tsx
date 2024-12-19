@@ -1,6 +1,7 @@
 // src/app/(protected)/products/page.tsx
 import { createServerComponentClient } from '@supabase/auth-helpers-nextjs'
 import { cookies } from 'next/headers'
+import { ProductCard } from '@/components/products/ProductCard'
 
 export default async function Products() {
   const supabase = createServerComponentClient({ cookies })
@@ -67,18 +68,10 @@ export default async function Products() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {products.map((product) => (
-            <div 
-              key={product.id} 
-              className="p-6 bg-white rounded-lg shadow hover:shadow-md transition-shadow"
-            >
-              <h3 className="font-semibold text-lg mb-2">{product.item_number}</h3>
-              <p className="text-gray-600 mb-4">{product.description}</p>
-              {product.category && (
-                <span className="inline-block bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">
-                  {product.category}
-                </span>
-              )}
-            </div>
+            <ProductCard 
+              key={product.id}
+              product={product}
+            />
           ))}
         </div>
       )}
