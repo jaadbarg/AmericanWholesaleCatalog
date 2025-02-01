@@ -37,26 +37,59 @@ export async function getCurrentUserData() {
 
 // Helper function to get customer-specific products
 export async function getCustomerProducts(customerId: string) {
-  console.log('Fetching products for customer:', customerId)
+  if (!customerId) {
+    console.error('Error: customerId is required to fetch customer products.');
+    return [];
+  }
 
-  const { data: customerProducts, error: customerProductsError } = await supabase
+  const { data, error } = await supabase
     .from('customer_products')
     .select(`
-      product_id,
-      products (
+      notes,  -- Fetch user-specific notes
+      product:products(
         id,
         item_number,
         description,
-        category
+        category,
+        created_at,
+        updated_at
       )
     `)
-    .eq('customer_id', customerId)
+    .eq('customer_id', customerId);
 
-  if (customerProductsError) {
-    console.error('Customer products error:', customerProductsError)
-    return []
+  if (error) {
+    console.error('Error fetching customer products:', error);
+    return [];
   }
 
-  console.log('Customer products data:', customerProducts)
-  return customerProducts?.map(item => item.products) || []
+  if (!data || data.length === 0) {
+    console.warn(`No products found for customer with ID: ${customerId}`);
+    return [];
+  }
+
+  return data.map(item => ({
+    ...item.product,
+    notes: item.notes // Attach user-specific notes
+  }));
 }
+
+export async function updateProductNotes(customerId: string, productId: string, notes: string) {
+  if (!customerId || !productId) {
+    console.error('Error: customerId and productId are required.');
+    return null;
+  }
+
+  const { error } = await supabase
+    .from('customer_products')
+    .update({ notes })
+    .eq('customer_id', customerId)
+    .eq('product_id', productId);
+
+  if (error) {
+    console.error('Error updating product notes:', error);
+    return null;
+  }
+
+  return { success: true };
+}
+

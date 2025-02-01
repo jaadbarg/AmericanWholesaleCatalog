@@ -3,14 +3,17 @@
 
 import { useState } from 'react'
 import { motion } from 'framer-motion'
-import { Plus, Minus, ShoppingCart } from 'lucide-react'
+import { Plus, Minus, ShoppingCart, Edit2, Check } from 'lucide-react'
 import { useCart } from '@/hooks/useCart'
+import { updateProductNotes } from '@/lib/supabase/client'
 
 type Product = {
   id: string
   item_number: string
   description: string
   category: string | null
+  customerNote: string
+  customerId: string
 }
 
 type ProductCardProps = {
@@ -19,6 +22,9 @@ type ProductCardProps = {
 
 export function ProductCard({ product }: ProductCardProps) {
   const [quantity, setQuantity] = useState(1)
+  const [isEditingNote, setIsEditingNote] = useState(false)
+  const [note, setNote] = useState(product.customerNote)
+  const [isSavingNote, setIsSavingNote] = useState(false)
   const addItem = useCart((state) => state.addItem)
 
   const incrementQuantity = () => {
@@ -36,8 +42,19 @@ export function ProductCard({ product }: ProductCardProps) {
       description: product.description,
       quantity
     })
-    // Reset quantity after adding to cart
     setQuantity(1)
+  }
+
+  const handleSaveNote = async () => {
+    setIsSavingNote(true)
+    try {
+      await updateProductNotes(product.customerId, product.id, note)
+      setIsEditingNote(false)
+    } catch (error) {
+      console.error('Error saving note:', error)
+    } finally {
+      setIsSavingNote(false)
+    }
   }
 
   return (
@@ -50,6 +67,49 @@ export function ProductCard({ product }: ProductCardProps) {
           {product.category}
         </span>
       )}
+
+      <div className="mb-4">
+        {isEditingNote ? (
+          <div className="space-y-2">
+            <textarea
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+              className="w-full p-2 border rounded-md text-sm"
+              placeholder="Add your note here..."
+              rows={2}
+            />
+            <div className="flex justify-end space-x-2">
+              <button
+                onClick={() => setIsEditingNote(false)}
+                className="text-sm text-gray-500 hover:text-gray-700"
+                disabled={isSavingNote}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSaveNote}
+                disabled={isSavingNote}
+                className="flex items-center space-x-1 text-sm text-blue-600 hover:text-blue-800"
+              >
+                <Check size={16} />
+                <span>{isSavingNote ? 'Saving...' : 'Save'}</span>
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div 
+            className="flex items-start justify-between group"
+            onClick={() => setIsEditingNote(true)}
+          >
+            <p className="text-sm text-gray-500 italic">
+              {note ? note : 'Add personal note...'}
+            </p>
+            <button className="opacity-0 group-hover:opacity-100 transition-opacity">
+              <Edit2 size={14} className="text-gray-400 hover:text-gray-600" />
+            </button>
+          </div>
+        )}
+      </div>
 
       <div className="flex items-center justify-between mt-4">
         <div className="flex items-center space-x-3">
