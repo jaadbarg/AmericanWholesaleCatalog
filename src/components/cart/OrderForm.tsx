@@ -8,6 +8,7 @@ import { useCart } from '@/hooks/useCart'
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
 import { isWithinOrderWindow, getNextBusinessDay } from '@/lib/utils/orderUtils'
 import { AlertCircle } from 'lucide-react'
+import { sendOrderConfirmationEmail, sendNewOrderNotificationToAdmin } from '@/lib/utils/emailUtils'
 
 export default function OrderForm() {
     const router = useRouter()
@@ -20,20 +21,19 @@ export default function OrderForm() {
     const [notes, setNotes] = useState('')
     const nextDeliveryDate = getNextBusinessDay().toISOString().split('T')[0]
     const [deliveryDate, setDeliveryDate] = useState(nextDeliveryDate)
-  // Update order window status every minute
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setOrderWindow(isWithinOrderWindow())
-    }, 60000)
 
-    return () => clearInterval(interval)
-  }, [])
+    useEffect(() => {
+      const interval = setInterval(() => {
+        setOrderWindow(isWithinOrderWindow())
+      }, 60000)
 
-  // Set initial delivery date to next business day
-  useEffect(() => {
-    const nextBusinessDay = getNextBusinessDay()
-    setDeliveryDate(nextBusinessDay.toISOString().split('T')[0])
-  }, [])
+      return () => clearInterval(interval)
+    }, [])
+
+    useEffect(() => {
+      const nextBusinessDay = getNextBusinessDay()
+      setDeliveryDate(nextBusinessDay.toISOString().split('T')[0])
+    }, [])
 
     const handleSubmit = async (e: React.FormEvent) => {
       e.preventDefault()
@@ -57,6 +57,15 @@ export default function OrderForm() {
           .single()
   
         if (!profile?.customer_id) throw new Error('No customer profile found')
+
+        // Get customer details for email
+        const { data: customer } = await supabase
+          .from('customers')
+          .select('name, email')
+          .eq('id', profile.customer_id)
+          .single()
+
+        if (!customer) throw new Error('Customer details not found')
   
         // 2. Create the order
         const { data: order, error: orderError } = await supabase
@@ -95,8 +104,27 @@ export default function OrderForm() {
           
           throw itemsError
         }
+
+        // 4. Send emails
+        const emailDetails = {
+          orderNumber: order.id.slice(0, 8),
+          customerEmail: customer.email,
+          customerName: customer.name,
+          items: items.map(item => ({
+            item_number: item.item_number,
+            description: item.description,
+            quantity: item.quantity
+          })),
+          deliveryDate: new Date(deliveryDate).toLocaleDateString(),
+          notes: notes || undefined
+        }
+
+        await Promise.all([
+          sendOrderConfirmationEmail(emailDetails),
+          sendNewOrderNotificationToAdmin(emailDetails)
+        ])
   
-        // 4. Success! Clear cart and redirect
+        // 5. Success! Clear cart and redirect
         clearCart()
         router.push('/dashboard/orders')
         router.refresh()
@@ -111,7 +139,6 @@ export default function OrderForm() {
   
     return (
         <div className="space-y-6">
-          {/* Order Window Status Banner */}
           <div className={`p-4 rounded-lg ${orderWindow.allowed ? 'bg-green-50' : 'bg-yellow-50'}`}>
             <div className="flex items-center">
               <AlertCircle className={`h-5 w-5 ${orderWindow.allowed ? 'text-green-400' : 'text-yellow-400'} mr-2`} />
@@ -147,22 +174,21 @@ export default function OrderForm() {
             </div>
     
             <div>
-                <label 
+              <label 
                 htmlFor="notes" 
                 className="block text-sm font-medium text-gray-700 mb-1"
-            >
+              >
                 Order Notes
-            </label>
-            <textarea
+              </label>
+              <textarea
                 id="notes"
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
                 rows={3}
                 className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
                 placeholder="Any special instructions for your order?"
-            />
+              />
             </div>
-           
     
             <motion.button
               type="submit"
@@ -175,5 +201,5 @@ export default function OrderForm() {
             </motion.button>
           </form>
         </div>
-      )
-  }
+    )
+}
