@@ -2,6 +2,7 @@
 "use client"
 
 import Link from 'next/link'
+import Image from 'next/image'
 import { usePathname, useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
@@ -46,8 +47,18 @@ export function Navbar() {
     >
       <div className="container mx-auto px-6">
         <div className="flex items-center justify-between h-16">
-          <Link href={isAdminUser ? "/admin/orders" : "/products"} className="font-bold text-xl text-blue-900">
-            American Wholesalers
+          <Link 
+            href={isAdminUser ? "/admin/orders" : "/products"} 
+            className="flex items-center space-x-2 font-bold text-xl text-blue-900"
+          >
+            <Image 
+              src="/favicon.png" 
+              alt="American Wholesalers Logo" 
+              width={30} 
+              height={30} 
+              className="rounded-full"
+            />
+            <span>American Wholesalers</span>
           </Link>
           
           {/* Mobile menu button */}

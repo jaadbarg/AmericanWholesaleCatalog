@@ -2,6 +2,7 @@
 import { cookies } from 'next/headers'
 import { createServerComponentClient } from '@supabase/auth-helpers-nextjs'
 import { redirect } from 'next/navigation'
+import Image from 'next/image'
 import { SignInForm } from '@/components/auth/SignInForm'
 
 export default async function SignIn() {
@@ -16,7 +17,14 @@ export default async function SignIn() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
       <div className="max-w-md w-full space-y-8 p-8 bg-white rounded-lg shadow">
-        <div>
+        <div className="flex flex-col items-center">
+          <Image 
+            src="/favicon.png" 
+            alt="American Wholesalers Logo" 
+            width={80} 
+            height={80} 
+            className="mx-auto"
+          />
           <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
             Sign in to your account
           </h2>
