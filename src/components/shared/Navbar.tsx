@@ -9,6 +9,7 @@ import { useCart } from '@/hooks/useCart'
 import { useState, useEffect } from 'react'
 import { isAdmin } from '@/lib/utils/adminUtils'
 import { CartButton } from '@/components/products/CartButton'
+import { User } from 'lucide-react'
 
 export function Navbar() {
   const pathname = usePathname()
@@ -36,14 +37,13 @@ export function Navbar() {
   }
 
   const isAdminUser = userEmail && isAdmin(userEmail)
-
   const [isMenuOpen, setIsMenuOpen] = useState(false)
 
   return (
     <motion.nav 
       initial={{ opacity: 0, y: -20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="fixed top-8 left-0 right-0 z-30 bg-white/80 backdrop-blur-md border-b" // Changed z-index to 30
+      className="fixed top-8 left-0 right-0 z-30 bg-white/80 backdrop-blur-md border-b"
     >
       <div className="container mx-auto px-6">
         <div className="flex items-center justify-between h-16">
@@ -104,6 +104,16 @@ export function Navbar() {
                 >
                   Orders
                 </Link>
+                <Link 
+                  href="/profile" 
+                  className={`${
+                    pathname === '/profile' 
+                      ? 'text-blue-900 font-medium' 
+                      : 'text-gray-600'
+                  } hover:text-blue-900 transition-colors`}
+                >
+                  My Profile
+                </Link>
               </>
             )}
             {isAdminUser && (
@@ -156,6 +166,13 @@ export function Navbar() {
                     onClick={() => setIsMenuOpen(false)}
                   >
                     Orders
+                  </Link>
+                  <Link 
+                    href="/profile" 
+                    className="block py-2 text-gray-600 hover:text-blue-900"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    My Profile
                   </Link>
                 </>
               )}

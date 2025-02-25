@@ -1,7 +1,7 @@
-// src/components/auth/SignInForm.tsx
+// src/components/auth/SignInForm.tsx - FIXED VERSION
 "use client"
 
-import { useState } from 'react'
+import { useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
 import { motion } from 'framer-motion'
@@ -15,8 +15,13 @@ export function SignInForm() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  // Use useCallback to ensure the function doesn't get recreated on every render
+  const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault()
+
+    // Prevent multiple submissions
+    if (loading) return
+    
     setLoading(true)
     setError(null)
 
@@ -30,14 +35,19 @@ export function SignInForm() {
         throw error
       }
 
+      // Navigate only once
       router.push('/products')
-      router.refresh()
+      
+      // Use refresh only after redirection to avoid multiple auth attempts
+      setTimeout(() => {
+        router.refresh()
+      }, 100)
     } catch (e) {
       setError(e instanceof Error ? e.message : 'An error occurred during sign in')
     } finally {
       setLoading(false)
     }
-  }
+  }, [email, password, loading, router, supabase.auth])
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
@@ -62,6 +72,7 @@ export function SignInForm() {
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+          disabled={loading}
         />
       </div>
 
@@ -76,12 +87,13 @@ export function SignInForm() {
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+          disabled={loading}
         />
       </div>
 
       <motion.button
         type="submit"
-        disabled={loading}
+        disabled={loading || !email || !password}
         className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-900 hover:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
         whileHover={{ scale: loading ? 1 : 1.01 }}
         whileTap={{ scale: loading ? 1 : 0.99 }}

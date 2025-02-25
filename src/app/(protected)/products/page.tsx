@@ -1,7 +1,7 @@
 // src/app/(protected)/products/page.tsx
 import { createServerComponentClient } from '@supabase/auth-helpers-nextjs'
 import { cookies } from 'next/headers'
-import { ProductCard } from '@/components/products/ProductCard'
+import { ProductsView } from '@/components/products/ProductsView'
 import { isAdmin } from '@/lib/utils/adminUtils'
 
 // Helper function to sort products
@@ -98,25 +98,9 @@ export default async function Products() {
     customerId: profile.customer_id
   }))
 
-  // Sort the products
-  const sortedProducts = sortProducts(productsWithNotes)
-
   return (
     <div className="py-8">
-      <h1 className="text-2xl font-bold mb-6">Products</h1>
-      
-      {!sortedProducts || sortedProducts.length === 0 ? (
-        <p className="text-gray-600">No products found for this customer.</p>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {sortedProducts.map((product) => (
-            <ProductCard 
-              key={product.id}
-              product={product}
-            />
-          ))}
-        </div>
-      )}
+      <ProductsView products={productsWithNotes} />
     </div>
   )
 }
