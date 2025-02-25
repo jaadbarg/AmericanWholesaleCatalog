@@ -30,12 +30,12 @@ export default async function SignIn() {
           <p className="text-xl mb-8 text-blue-100">
             Premium restaurant supplies for Upstate NY's finest establishments
           </p>
-          <div className="bg-blue-800/50 rounded-lg p-6 backdrop-blur-sm">
+          {/* <div className="bg-blue-800/50 rounded-lg p-6 backdrop-blur-sm">
             <p className="italic text-blue-200">
               "American Wholesalers has been a trusted partner for our restaurant for over 10 years. Their convenient ordering system and reliable delivery make them an essential part of our success."
             </p>
             <p className="mt-4 font-medium">— John Smith, Executive Chef</p>
-          </div>
+          </div> */}
         </div>
       </div>
       
