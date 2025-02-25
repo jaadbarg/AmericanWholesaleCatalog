@@ -1,32 +1,8 @@
 // src/app/(protected)/products/page.tsx
 import { createServerComponentClient } from '@supabase/auth-helpers-nextjs'
 import { cookies } from 'next/headers'
-import { ProductsView } from '@/components/products/ProductsView'
+import { EnhancedProductsView } from '@/components/products/EnhancedProductsView'
 import { isAdmin } from '@/lib/utils/adminUtils'
-
-// Helper function to sort products
-// function sortProducts(products: any[]) {
-//   return products.sort((a, b) => {
-//     // Extract the alphabetic prefix and numeric parts
-//     const aMatch = a.description.match(/^([A-Za-z]+)(\d+)/)
-//     const bMatch = b.description.match(/^([A-Za-z]+)(\d+)/)
-    
-//     if (!aMatch || !bMatch) {
-//       return a.description.localeCompare(b.description)
-//     }
-
-//     const [, aPrefix, aNumber] = aMatch
-//     const [, bPrefix, bNumber] = bMatch
-
-//     // First compare the alphabetic prefixes
-//     if (aPrefix !== bPrefix) {
-//       return aPrefix.localeCompare(bPrefix)
-//     }
-
-//     // If prefixes are the same, compare the numeric parts
-//     return parseInt(aNumber) - parseInt(bNumber)
-//   })
-// }
 
 export default async function Products() {
   const supabase = createServerComponentClient({ cookies })
@@ -100,7 +76,7 @@ export default async function Products() {
 
   return (
     <div className="py-8">
-      <ProductsView products={productsWithNotes} />
+      <EnhancedProductsView products={productsWithNotes} />
     </div>
   )
 }

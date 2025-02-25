@@ -1,7 +1,8 @@
 // src/app/(protected)/dashboard/orders/page.tsx
 import { createServerComponentClient } from '@supabase/auth-helpers-nextjs'
 import { cookies } from 'next/headers'
-import OrderDetails from '@/components/orders/OrderDetails'
+import { EnhancedOrderDetails } from '@/components/orders/EnhancedOrderDetails'
+import { PackageOpen } from 'lucide-react'
 
 export default async function OrdersPage() {
   const supabase = createServerComponentClient({ cookies })
@@ -18,66 +19,77 @@ export default async function OrdersPage() {
     .single()
 
   if (!profile?.customer_id) {
-    return <div>No customer profile found.</div>
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] text-center">
+        <div className="bg-yellow-50 border border-yellow-100 rounded-xl p-8 max-w-md">
+          <div className="text-yellow-500 flex justify-center mb-4">
+            <PackageOpen size={48} />
+          </div>
+          <h2 className="text-xl font-bold text-gray-900 mb-2">No Customer Profile Found</h2>
+          <p className="text-gray-600">
+            We couldn't find a customer profile associated with your account. 
+            Please contact support for assistance.
+          </p>
+        </div>
+      </div>
+    )
   }
 
-  // Get orders first
-  const { data: orders, error: ordersError } = await supabase
+  // Get orders with items
+  const { data: orders, error } = await supabase
     .from('orders')
-    .select('*')
+    .select(`
+      *,
+      order_items (
+        id,
+        quantity,
+        products (
+          id,
+          item_number,
+          description
+        )
+      )
+    `)
     .eq('customer_id', profile.customer_id)
     .order('created_at', { ascending: false })
 
-  if (ordersError) {
-    console.error('Error fetching orders:', ordersError)
-    return <div>Error loading orders</div>
+  if (error) {
+    console.error('Error fetching orders:', error)
+    return (
+      <div className="bg-red-50 border border-red-200 p-4 rounded-lg text-red-700">
+        Error loading orders: {error.message}
+      </div>
+    )
   }
 
-  // Then get order items for each order
-  const ordersWithDetails = await Promise.all(
-    orders.map(async (order) => {
-      // Get order items
-      const { data: orderItems } = await supabase
-        .from('order_items')
-        .select('*')
-        .eq('order_id', order.id)
-
-      // Get product details for each order item
-      const itemsWithProducts = await Promise.all(
-        (orderItems || []).map(async (item) => {
-          const { data: product } = await supabase
-            .from('products')
-            .select('*')
-            .eq('id', item.product_id)
-            .single()
-
-          return {
-            ...item,
-            products: product
-          }
-        })
-      )
-
-      return {
-        ...order,
-        order_items: itemsWithProducts
-      }
-    })
-  )
-
   return (
-    <div className="py-8">
-      <h1 className="text-2xl font-bold mb-6">Order History</h1>
+    <div>
+      <div className="flex items-center gap-3 mb-8">
+        <PackageOpen className="h-7 w-7 text-blue-900" />
+        <h1 className="text-3xl font-bold text-blue-900">Order History</h1>
+      </div>
       
-      {ordersWithDetails.length === 0 ? (
-        <div className="text-center py-12 bg-gray-50 rounded-lg">
-          <p className="text-gray-600">No orders found.</p>
+      {orders && orders.length > 0 ? (
+        <div className="space-y-6">
+          {orders.map((order) => (
+            <EnhancedOrderDetails key={order.id} order={order} />
+          ))}
         </div>
       ) : (
-        <div className="space-y-6">
-          {ordersWithDetails.map((order) => (
-            <OrderDetails key={order.id} order={order} />
-          ))}
+        <div className="flex flex-col items-center justify-center bg-gray-50 py-16 rounded-lg border border-gray-200">
+          <div className="text-gray-400 mb-4">
+            <PackageOpen size={48} />
+          </div>
+          <h2 className="text-xl font-semibold text-gray-700 mb-2">No orders yet</h2>
+          <p className="text-gray-500 max-w-md text-center mb-6">
+            Your order history will appear here once you place your first order.
+          </p>
+          <a 
+            href="/products" 
+            className="px-4 py-2 bg-blue-900 text-white rounded-lg hover:bg-blue-800 transition-colors"
+          >
+            Browse Products
+          </a>
         </div>
       )}
     </div>
