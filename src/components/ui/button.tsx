@@ -52,28 +52,29 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     // Combine all styles
     const buttonStyles = `${baseStyles} ${variantStyles[variant]} ${sizeStyles[size]} ${disabledStyles} ${widthStyles} ${className}`;
     
-    // Scale animations
-    const scaleAnimation = (!disabled && !isLoading) ? {
-      whileHover: { scale: 1.02 },
-      whileTap: { scale: 0.98 },
-    } : {};
-    
+    // Use a regular button inside a motion div to avoid type conflicts
     return (
-      <motion.button
-        ref={ref}
-        className={buttonStyles}
-        disabled={disabled || isLoading}
-        {...scaleAnimation}
-        {...props}
+      <motion.div
+        whileHover={(!disabled && !isLoading) ? { scale: 1.02 } : {}}
+        whileTap={(!disabled && !isLoading) ? { scale: 0.98 } : {}}
+        className="inline-block"
+        style={fullWidth ? { width: '100%' } : {}}
       >
-        {isLoading && (
-          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-        )}
-        {!isLoading && icon && (
-          <span className="mr-2">{icon}</span>
-        )}
-        {children}
-      </motion.button>
+        <button
+          ref={ref}
+          className={buttonStyles}
+          disabled={disabled || isLoading}
+          {...props}
+        >
+          {isLoading && (
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+          )}
+          {!isLoading && icon && (
+            <span className="mr-2">{icon}</span>
+          )}
+          {children}
+        </button>
+      </motion.div>
     );
   }
 );

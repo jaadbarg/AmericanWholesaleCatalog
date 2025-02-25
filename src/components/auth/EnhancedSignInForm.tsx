@@ -138,7 +138,7 @@ export function EnhancedSignInForm() {
             id="email"
             type="email"
             label="Email address"
-            error={emailError}
+            error={emailError || undefined}
             icon={<Mail size={18} className="text-gray-400" />}
             value={email}
             onChange={(e) => setEmail(e.target.value)}
@@ -157,7 +157,7 @@ export function EnhancedSignInForm() {
             id="password"
             type={showPassword ? 'text' : 'password'}
             label="Password"
-            error={passwordError}
+            error={passwordError || undefined}
             icon={<Lock size={18} className="text-gray-400" />}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
