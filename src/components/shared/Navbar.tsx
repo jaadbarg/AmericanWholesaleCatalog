@@ -9,7 +9,6 @@ import { useCart } from '@/hooks/useCart'
 import { useState, useEffect } from 'react'
 import { isAdmin } from '@/lib/utils/adminUtils'
 import { CartButton } from '@/components/products/CartButton'
-import { User } from 'lucide-react'
 
 export function Navbar() {
   const pathname = usePathname()

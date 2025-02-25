@@ -301,7 +301,7 @@ export function ProductsView({ products }: { products: Product[] }) {
               }
             }}
           >
-            {filteredProducts.map((product, index) => (
+            {filteredProducts.map((product) => (
               <motion.div 
                 key={product.id}
                 variants={{
