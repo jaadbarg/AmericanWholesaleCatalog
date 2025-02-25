@@ -6,8 +6,13 @@ import "./globals.css"
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "American Wholesalers | Premium Restaurant Supplies",
+  title: "American Wholesalers Catalog | Premium Restaurant Supplies",
   description: "Supplying Upstate NY's finest restaurants with premium wholesale products",
+  icons: {
+    icon: "/favicon.png",
+    apple: "/favicon.png",
+    shortcut: "/favicon.png",
+  },
 }
 
 export default function RootLayout({
