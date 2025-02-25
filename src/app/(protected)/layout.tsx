@@ -24,7 +24,7 @@ export default async function ProtectedLayout({
     <div className="min-h-screen bg-gray-50">
       <EnhancedOrderBanner />
       <EnhancedNavbar />
-      <main className="container mx-auto px-4 pt-32 pb-16 max-w-7xl">
+      <main className="container mx-auto px-4 pt-24 pb-16 max-w-7xl">
         {children}
       </main>
       <footer className="bg-white border-t py-8">

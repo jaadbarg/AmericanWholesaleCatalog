@@ -66,7 +66,7 @@ export default function EnhancedOrderBanner() {
   const remainingTime = getRemainingTime()
 
   if (isDismissed) {
-    return <div className="h-8 bg-white fixed top-0 left-0 right-0 z-20" />
+    return null
   }
 
   return (
@@ -80,7 +80,7 @@ export default function EnhancedOrderBanner() {
         exit={{ y: -100 }}
         transition={{ type: "spring", stiffness: 100 }}
       >
-        <div className="container mx-auto px-4 py-2">
+        <div className="container mx-auto px-4 py-1.5">
           <div className="flex items-center justify-between">
             <div className="flex items-center justify-center flex-1">
               <div className="flex items-center">

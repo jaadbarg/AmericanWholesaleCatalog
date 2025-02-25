@@ -127,18 +127,18 @@ export function EnhancedNavbar() {
       <motion.nav 
         initial={{ y: -100 }}
         animate={{ y: 0 }}
-        className={`fixed top-8 left-0 right-0 z-30 transition-all duration-300 ${
+        className={`fixed top-0 left-0 right-0 z-30 transition-all duration-300 ${
           scrolled ? "bg-white shadow-md" : "bg-white/90 backdrop-blur-md"
         }`}
       >
         <div className="container mx-auto px-4">
-          <div className="flex items-center justify-between h-16">
+          <div className="flex items-center justify-between h-14">
             {/* Logo */}
             <Link 
               href={isAdminUser ? "/admin/orders" : "/products"} 
               className="flex items-center space-x-2 font-bold text-xl text-blue-900"
             >
-              <div className="relative h-8 w-8">
+              <div className="relative h-7 w-7">
                 <Image 
                   src="/favicon.png" 
                   alt="American Wholesalers Logo" 
@@ -286,7 +286,7 @@ export function EnhancedNavbar() {
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
             transition={{ duration: 0.2 }}
-            className="fixed inset-x-0 top-24 bg-white z-20 border-b shadow-lg md:hidden"
+            className="fixed inset-x-0 top-14 bg-white z-20 border-b shadow-lg md:hidden"
           >
             <div className="container mx-auto px-4 py-3">
               <div className="space-y-1 pb-3">

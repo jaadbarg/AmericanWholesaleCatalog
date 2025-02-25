@@ -6,7 +6,7 @@ import { motion } from 'framer-motion'
 import { useRouter } from 'next/navigation'
 import { useCart } from '@/hooks/useCart'
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
-import { isWithinOrderWindow, getNextBusinessDay } from '@/lib/utils/orderUtils'
+import { isWithinOrderWindow, getNextBusinessDay, getValidBusinessDays } from '@/lib/utils/orderUtils'
 import { AlertCircle, Calendar, FileText, Check, Clock, CheckCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { TextArea } from '@/components/ui/input'
@@ -20,24 +20,44 @@ export function EnhancedOrderForm() {
     const [error, setError] = useState<string | null>(null)
     const { items, clearCart } = useCart()
     const [orderWindow, setOrderWindow] = useState(isWithinOrderWindow())
-
     const [notes, setNotes] = useState('')
-    const nextDeliveryDate = getNextBusinessDay().toISOString().split('T')[0]
-    const [deliveryDate, setDeliveryDate] = useState(nextDeliveryDate)
+    const [validDeliveryDates, setValidDeliveryDates] = useState<Date[]>([])
+    const [deliveryDate, setDeliveryDate] = useState('')
     const [isSubmitting, setIsSubmitting] = useState(false)
     const [isSuccess, setIsSuccess] = useState(false)
 
+    // Check order window status on mount and every 5 minutes
     useEffect(() => {
+      // Initial check
+      setOrderWindow(isWithinOrderWindow())
+      
+      // Set up interval - 5 minutes is enough for order window changes
       const interval = setInterval(() => {
-        setOrderWindow(isWithinOrderWindow())
-      }, 60000)
+        const currentWindow = isWithinOrderWindow()
+        setOrderWindow(currentWindow)
+        
+        // If the order window closes, we need to update delivery dates
+        if (!currentWindow.allowed) {
+          updateValidDeliveryDates()
+        }
+      }, 5 * 60 * 1000) // 5 minutes
 
       return () => clearInterval(interval)
     }, [])
 
-    useEffect(() => {
+    // Generate valid delivery dates that are business days
+    const updateValidDeliveryDates = () => {
+      const validDates = getValidBusinessDays(30) // Get next 30 days of valid business days
+      setValidDeliveryDates(validDates)
+      
+      // Set default to next business day
       const nextBusinessDay = getNextBusinessDay()
       setDeliveryDate(nextBusinessDay.toISOString().split('T')[0])
+    }
+
+    // Initialize delivery dates on component mount
+    useEffect(() => {
+      updateValidDeliveryDates()
     }, [])
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -206,17 +226,36 @@ export function EnhancedOrderForm() {
                 <Calendar className="h-4 w-4 mr-1 text-gray-400" />
                 Delivery Date
               </label>
-              <input
+              
+              <select
                 id="delivery-date"
-                type="date"
                 required
                 value={deliveryDate}
                 onChange={(e) => setDeliveryDate(e.target.value)}
-                min={getNextBusinessDay().toISOString().split('T')[0]}
                 className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-              />
+              >
+                {validDeliveryDates.map((date) => {
+                  const dateStr = date.toISOString().split('T')[0];
+                  const displayDate = date.toLocaleDateString('en-US', { 
+                    weekday: 'short', 
+                    month: 'short', 
+                    day: 'numeric' 
+                  });
+                  
+                  return (
+                    <option key={dateStr} value={dateStr}>
+                      {displayDate}
+                    </option>
+                  );
+                })}
+                
+                {validDeliveryDates.length === 0 && (
+                  <option value="">Loading delivery dates...</option>
+                )}
+              </select>
+              
               <p className="mt-1 text-xs text-gray-500">
-                Select your preferred delivery date (business days only)
+                Only business days are available for delivery (excludes weekends and holidays)
               </p>
             </div>
     

@@ -1,13 +1,13 @@
-// src/app/(protected)/admin/orders/page.tsx
+// src/app/(protected)/admin/orders/confirmed/page.tsx
 import { createServerComponentClient } from '@supabase/auth-helpers-nextjs';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { isAdmin } from '@/lib/utils/adminUtils';
-import AdminOrderList from '@/components/admin/AdminOrderList';
 import Link from 'next/link';
-import { ArrowLeft, Clock, ChevronRight } from 'lucide-react';
+import { ArrowLeft, ChevronRight, CheckCircle } from 'lucide-react';
+import AllOrdersList from '@/components/admin/AllOrdersList';
 
-export default async function AdminOrdersPage() {
+export default async function ConfirmedOrdersPage() {
   const supabase = createServerComponentClient({ cookies });
 
   // Check if user is admin
@@ -16,7 +16,7 @@ export default async function AdminOrdersPage() {
     redirect('/products');
   }
 
-  // Fetch all pending orders with customer & order items
+  // Fetch all confirmed orders with customer & order items
   const { data: orders, error: ordersError } = await supabase
     .from('orders')
     .select(`
@@ -30,8 +30,9 @@ export default async function AdminOrdersPage() {
       customer:customer_id (id, name, email),
       order_items (id, quantity, product_id)
     `)
-    .eq('status', 'pending')
-    .order('created_at', { ascending: false });
+    .eq('status', 'confirmed')
+    .order('updated_at', { ascending: false })
+    .limit(100); // Limit to latest 100 orders for performance
 
   if (ordersError) {
     console.error('🚨 Error fetching orders:', ordersError);
@@ -39,15 +40,17 @@ export default async function AdminOrdersPage() {
   }
 
   // Get counts for order statuses
-  const [pendingCountResult, confirmedCountResult, cancelledCountResult] = await Promise.all([
+  const [pendingCountResult, confirmedCountResult, cancelledCountResult, totalCountResult] = await Promise.all([
     supabase.from('orders').select('id', { count: 'exact' }).eq('status', 'pending'),
     supabase.from('orders').select('id', { count: 'exact' }).eq('status', 'confirmed'),
-    supabase.from('orders').select('id', { count: 'exact' }).eq('status', 'cancelled')
+    supabase.from('orders').select('id', { count: 'exact' }).eq('status', 'cancelled'),
+    supabase.from('orders').select('id', { count: 'exact' })
   ]);
 
   const pendingCount = pendingCountResult.count || 0;
   const confirmedCount = confirmedCountResult.count || 0;
   const cancelledCount = cancelledCountResult.count || 0;
+  const totalCount = totalCountResult.count || 0;
 
   // Fetch all products
   const { data: products, error: productsError } = await supabase
@@ -96,18 +99,18 @@ export default async function AdminOrdersPage() {
               <span>Dashboard</span>
             </Link>
             <ChevronRight className="h-4 w-4" />
-            <span>Orders</span>
+            <span>Confirmed Orders</span>
           </div>
           <h1 className="text-3xl font-bold flex items-center gap-3">
-            <Clock className="h-7 w-7 text-amber-500" />
-            <span>Pending Orders</span>
+            <CheckCircle className="h-7 w-7 text-green-500" />
+            <span>Confirmed Orders</span>
           </h1>
         </div>
 
         <div className="flex flex-wrap gap-2">
           <Link 
             href="/admin/orders"
-            className="px-4 py-2 bg-amber-100 text-amber-800 rounded-md font-medium flex items-center gap-2"
+            className="px-4 py-2 bg-gray-100 hover:bg-amber-50 text-gray-800 hover:text-amber-800 rounded-md font-medium flex items-center gap-2"
           >
             <span className="relative flex h-3 w-3">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
@@ -117,13 +120,13 @@ export default async function AdminOrdersPage() {
           </Link>
           <Link 
             href="/admin/orders/confirmed"
-            className="px-4 py-2 bg-gray-100 hover:bg-green-50 text-gray-800 hover:text-green-800 rounded-md font-medium flex items-center gap-2"
+            className="px-4 py-2 bg-green-100 text-green-800 rounded-md font-medium"
           >
             Confirmed ({confirmedCount})
           </Link>
           <Link 
             href="/admin/orders/cancelled"
-            className="px-4 py-2 bg-gray-100 hover:bg-red-50 text-gray-800 hover:text-red-800 rounded-md font-medium flex items-center gap-2"
+            className="px-4 py-2 bg-gray-100 hover:bg-red-50 text-gray-800 hover:text-red-800 rounded-md font-medium"
           >
             Cancelled ({cancelledCount})
           </Link>
@@ -131,7 +134,7 @@ export default async function AdminOrdersPage() {
             href="/admin/orders/all"
             className="px-4 py-2 bg-gray-100 hover:bg-blue-50 text-gray-800 hover:text-blue-800 rounded-md font-medium"
           >
-            View All
+            View All ({totalCount})
           </Link>
         </div>
       </div>
@@ -139,25 +142,24 @@ export default async function AdminOrdersPage() {
       {ordersWithProductDetails.length === 0 ? (
         <div className="text-center py-16 bg-gray-50 rounded-lg border border-dashed border-gray-300">
           <div className="mb-4">
-            <Clock className="h-12 w-12 text-gray-400 mx-auto" />
+            <CheckCircle className="h-12 w-12 text-gray-400 mx-auto" />
           </div>
-          <h2 className="text-xl font-semibold text-gray-800 mb-2">No Pending Orders</h2>
+          <h2 className="text-xl font-semibold text-gray-800 mb-2">No Confirmed Orders</h2>
           <p className="text-gray-600 max-w-md mx-auto">
-            There are currently no orders waiting for your approval. 
-            Check back later or view all orders.
+            There are no confirmed orders yet. When you confirm a pending order, it will appear here.
           </p>
           <div className="mt-6">
             <Link 
-              href="/admin/orders/all"
+              href="/admin/orders"
               className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
             >
-              View All Orders
+              Review Pending Orders
             </Link>
           </div>
         </div>
       ) : (
-        <div className="space-y-6">
-          <AdminOrderList initialOrders={ordersWithProductDetails} />
+        <div className="bg-white rounded-lg border shadow-sm overflow-hidden">
+          <AllOrdersList initialOrders={ordersWithProductDetails} />
         </div>
       )}
     </div>
