@@ -14,7 +14,7 @@ export default async function AdminOrdersPage() {
     redirect('/products');
   }
 
-  // Fetch all pending orders with customers & order items
+  // Fetch all pending orders with customer & order items
   const { data: orders, error: ordersError } = await supabase
     .from('orders')
     .select(`
@@ -25,7 +25,7 @@ export default async function AdminOrdersPage() {
       updated_at,
       delivery_date,
       notes,
-      customers:customer_id (id, name, email),
+      customer:customer_id (id, name, email),
       order_items (id, quantity, product_id)
     `)
     .eq('status', 'pending')
@@ -49,21 +49,18 @@ export default async function AdminOrdersPage() {
   // Create a product lookup map
   const productMap = new Map(products.map((p) => [p.id, p]));
 
-  // Debugging: Log fetched data
-  // console.log('✅ All Products:', products);
-  // console.log('✅ Product Map:', productMap);
-
   // Attach product details to order items using product_id
-  const ordersWithProductDetails = orders.map((order) => ({
-    ...order,
-    order_items: order.order_items.map((item) => ({
-      ...item,
-      product: productMap.get(item.product_id) || null, // Add product details
-    })),
-  }));
-
-  // Debugging: Log the final order structure
-  // console.log('🚀 Final Orders Data:', JSON.stringify(ordersWithProductDetails, null, 2));
+  const ordersWithProductDetails = orders.map((order) => {
+    const { customer, ...restOrder } = order; // remove the original 'customer'
+    return {
+      ...restOrder,
+      customers: customer && customer.length ? customer[0] : null,
+      order_items: order.order_items.map((item) => ({
+        ...item,
+        product: productMap.get(item.product_id) || null, // add product details
+      })),
+    };
+  });
 
   return (
     <div className="py-8">

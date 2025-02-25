@@ -46,8 +46,8 @@ function extractCategories(products: Product[]): string[] {
     .map(p => p.category)
     .filter((category): category is string => category !== null)
   
-  return [...new Set(categories)].sort()
-}
+    return Array.from(new Set(categories)).sort()
+  }
 
 export function ProductsView({ products }: { products: Product[] }) {
   const [searchQuery, setSearchQuery] = useState('')
