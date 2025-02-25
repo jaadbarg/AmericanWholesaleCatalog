@@ -41,6 +41,67 @@ export default function AllOrdersList({ initialOrders }: { initialOrders: Order[
   const [sortBy, setSortBy] = useState<string>('date-desc')
   const [isFiltersOpen, setIsFiltersOpen] = useState(false)
   
+  // Define the CSV generation function
+  const generateCSV = React.useCallback(() => {
+    // Create CSV header row
+    const headers = ['Order ID', 'Date', 'Customer', 'Email', 'Status', 'Delivery Date', 'Items', 'Notes']
+    
+    // Helper function to escape CSV fields properly
+    const escapeCSV = (field: string | null | undefined) => {
+      if (field === null || field === undefined) return '""'
+      
+      // If field contains commas, newlines, or quotes, wrap in quotes and escape internal quotes
+      const stringValue = String(field)
+      const needsQuotes = stringValue.includes(',') || 
+                          stringValue.includes('\n') || 
+                          stringValue.includes('"') ||
+                          stringValue.includes(';')
+                          
+      if (needsQuotes) {
+        // Double up any quotes in the content
+        return `"${stringValue.replace(/"/g, '""')}"`
+      }
+      
+      return stringValue
+    }
+    
+    // Create CSV data rows
+    const rows = filteredOrders.map(order => {
+      const itemsText = order.order_items
+        .map(item => `${item.quantity}x ${item.product?.item_number || 'Unknown'} - ${item.product?.description || 'Unknown'}`)
+        .join('; ')
+        
+      return [
+        escapeCSV(order.id),
+        escapeCSV(new Date(order.created_at).toLocaleDateString()),
+        escapeCSV(order.customers?.name || 'Unknown'),
+        escapeCSV(order.customers?.email || 'Unknown'),
+        escapeCSV(order.status),
+        escapeCSV(new Date(order.delivery_date).toLocaleDateString()),
+        escapeCSV(itemsText),
+        escapeCSV(order.notes || '')
+      ].join(',')
+    })
+    
+    // Combine headers and rows
+    const headerRow = headers.map(header => escapeCSV(header)).join(',')
+    const csvContent = [headerRow, ...rows].join('\n')
+    
+    // Create a blob and download link
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.setAttribute('href', url)
+    link.setAttribute('download', `orders-export-${new Date().toISOString().split('T')[0]}.csv`)
+    link.style.visibility = 'hidden'
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    
+    // Cleanup
+    setTimeout(() => URL.revokeObjectURL(url), 100)
+  }, [filteredOrders])
+
   // Add effect to handle dashboard export link click
   useEffect(() => {
     const dashboardExportLink = document.getElementById('dashboard-export-link')
@@ -56,7 +117,7 @@ export default function AllOrdersList({ initialOrders }: { initialOrders: Order[
         dashboardExportLink.removeEventListener('click', generateCSV)
       }
     }
-  }, [filteredOrders, generateCSV])
+  }, [generateCSV])
 
   useEffect(() => {
     // Apply filters and search
@@ -154,66 +215,6 @@ export default function AllOrdersList({ initialOrders }: { initialOrders: Order[
         return 'bg-gray-100 text-gray-800'
     }
   }
-  
-  const generateCSV = React.useCallback(() => {
-    // Create CSV header row
-    const headers = ['Order ID', 'Date', 'Customer', 'Email', 'Status', 'Delivery Date', 'Items', 'Notes']
-    
-    // Helper function to escape CSV fields properly
-    const escapeCSV = (field: string | null | undefined) => {
-      if (field === null || field === undefined) return '""'
-      
-      // If field contains commas, newlines, or quotes, wrap in quotes and escape internal quotes
-      const stringValue = String(field)
-      const needsQuotes = stringValue.includes(',') || 
-                          stringValue.includes('\n') || 
-                          stringValue.includes('"') ||
-                          stringValue.includes(';')
-                          
-      if (needsQuotes) {
-        // Double up any quotes in the content
-        return `"${stringValue.replace(/"/g, '""')}"`
-      }
-      
-      return stringValue
-    }
-    
-    // Create CSV data rows
-    const rows = filteredOrders.map(order => {
-      const itemsText = order.order_items
-        .map(item => `${item.quantity}x ${item.product?.item_number || 'Unknown'} - ${item.product?.description || 'Unknown'}`)
-        .join('; ')
-        
-      return [
-        escapeCSV(order.id),
-        escapeCSV(new Date(order.created_at).toLocaleDateString()),
-        escapeCSV(order.customers?.name || 'Unknown'),
-        escapeCSV(order.customers?.email || 'Unknown'),
-        escapeCSV(order.status),
-        escapeCSV(new Date(order.delivery_date).toLocaleDateString()),
-        escapeCSV(itemsText),
-        escapeCSV(order.notes || '')
-      ].join(',')
-    })
-    
-    // Combine headers and rows
-    const headerRow = headers.map(header => escapeCSV(header)).join(',')
-    const csvContent = [headerRow, ...rows].join('\n')
-    
-    // Create a blob and download link
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
-    const url = URL.createObjectURL(blob)
-    const link = document.createElement('a')
-    link.setAttribute('href', url)
-    link.setAttribute('download', `orders-export-${new Date().toISOString().split('T')[0]}.csv`)
-    link.style.visibility = 'hidden'
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
-    
-    // Cleanup
-    setTimeout(() => URL.revokeObjectURL(url), 100)
-  }, [filteredOrders])
 
   return (
     <div>
@@ -331,7 +332,7 @@ export default function AllOrdersList({ initialOrders }: { initialOrders: Order[
                 <th className="px-4 py-3">Status</th>
                 <th className="px-4 py-3">Delivery</th>
                 <th className="px-4 py-3">Items</th>
-                <th className="px-4 py-3 text-right">Actions</th>
+                {/* <th className="px-4 py-3 text-right">Actions</th> */}
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200 bg-white">
@@ -385,7 +386,7 @@ export default function AllOrdersList({ initialOrders }: { initialOrders: Order[
                     <td className="px-4 py-4 text-sm text-gray-500">
                       {order.order_items.length} {order.order_items.length === 1 ? 'item' : 'items'}
                     </td>
-                    <td className="px-4 py-4 text-right text-sm">
+                    {/* <td className="px-4 py-4 text-right text-sm">
                       <Link 
                         href={`/admin/orders/${encodeURIComponent(order.id)}`}
                         className="text-blue-600 hover:text-blue-900 inline-flex items-center gap-1"
@@ -393,7 +394,7 @@ export default function AllOrdersList({ initialOrders }: { initialOrders: Order[
                         <Eye className="h-4 w-4" />
                         <span>View</span>
                       </Link>
-                    </td>
+                    </td> */}
                   </tr>
                   
                   {/* Expanded Order Details */}

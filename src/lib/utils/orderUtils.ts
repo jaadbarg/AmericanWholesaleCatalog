@@ -15,9 +15,10 @@ const ORDER_CUTOFF_HOUR = 15; // 3 PM
 
 /**
  * Checks if current time is within the order window
+ * Orders can always be placed, but next-day delivery is only available before 3 PM
  * @returns Object with allowed status and message
  */
-export function isWithinOrderWindow(): { allowed: boolean; message: string } {
+export function isWithinOrderWindow(): { allowed: boolean; message: string; canScheduleNextDay: boolean } {
   // Get current time in the company's timezone
   const now = new Date();
   const hour = now.getHours();
@@ -30,41 +31,61 @@ export function isWithinOrderWindow(): { allowed: boolean; message: string } {
   // Check if it's a holiday
   const isHoliday = isPublicHoliday(now);
   
-  // If weekend or holiday, ordering is closed
-  if (isWeekend) {
-    return {
-      allowed: false,
-      message: "Orders are closed on weekends. Please place your order on a business day before 3:00 PM for next business day delivery."
-    };
-  }
-  
-  if (isHoliday) {
-    return {
-      allowed: false,
-      message: "Orders are closed on holidays. Please place your order on a business day before 3:00 PM for next business day delivery."
-    };
-  }
-  
   // Check if it's after the cutoff time (3 PM)
-  if (currentTime >= ORDER_CUTOFF_HOUR) {
-    return {
-      allowed: false,
-      message: "Orders are closed for today. Please place your order before 3:00 PM for next business day delivery."
-    };
-  }
+  const afterCutoff = currentTime >= ORDER_CUTOFF_HOUR;
   
-  // Calculate when the delivery will happen
-  const deliveryDate = getNextBusinessDay();
-  const formattedDate = deliveryDate.toLocaleDateString('en-US', { 
+  // Calculate when the next possible delivery day will be
+  const nextBusinessDay = getNextBusinessDay();
+  const formattedNextDay = nextBusinessDay.toLocaleDateString('en-US', { 
     weekday: 'long', 
     year: 'numeric', 
     month: 'long', 
     day: 'numeric' 
   });
   
+  // For orders after cutoff, calculate the day after next business day
+  const dayAfterNextBusinessDay = new Date(nextBusinessDay);
+  dayAfterNextBusinessDay.setDate(dayAfterNextBusinessDay.getDate() + 1);
+  
+  // Find the next business day after that (skipping weekends/holidays)
+  while (
+    dayAfterNextBusinessDay.getDay() === 0 || // Sunday
+    dayAfterNextBusinessDay.getDay() === 6 || // Saturday
+    isPublicHoliday(dayAfterNextBusinessDay)  // Holiday
+  ) {
+    dayAfterNextBusinessDay.setDate(dayAfterNextBusinessDay.getDate() + 1);
+  }
+  
+  const formattedDayAfterNext = dayAfterNextBusinessDay.toLocaleDateString('en-US', {
+    weekday: 'long', 
+    year: 'numeric', 
+    month: 'long', 
+    day: 'numeric'
+  });
+  
+  // If weekend or holiday, we can still place orders but delivery will be delayed
+  if (isWeekend || isHoliday) {
+    return {
+      allowed: true,
+      canScheduleNextDay: false,
+      message: `Orders placed on weekends or holidays will be delivered on ${formattedNextDay} at the earliest.`
+    };
+  }
+  
+  // If after cutoff, we can still place orders but next-day delivery isn't available
+  if (afterCutoff) {
+    return {
+      allowed: true,
+      canScheduleNextDay: false,
+      message: `It's after 3:00 PM. Orders placed now will be delivered on ${formattedDayAfterNext} at the earliest.`
+    };
+  }
+  
+  // Before cutoff on a business day - next day delivery is available
   return {
     allowed: true,
-    message: `Your order will be delivered on ${formattedDate} if placed before 3:00 PM today.`
+    canScheduleNextDay: true,
+    message: `Order before 3:00 PM today for delivery on ${formattedNextDay}.`
   };
 }
 

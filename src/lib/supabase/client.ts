@@ -122,6 +122,130 @@ export async function updateProductNotes(customerId: string, productId: string, 
   return { success: true }
 }
 
+// Helper function to get all customers
+export async function getAllCustomers() {
+  const { data, error } = await supabase
+    .from('customer')
+    .select('*')
+    .order('name')
+
+  if (error) {
+    console.error('Error fetching customers:', error)
+    return []
+  }
+
+  return data
+}
+
+// Helper function to get all products
+export async function getAllProducts() {
+  const { data, error } = await supabase
+    .from('products')
+    .select('*')
+    .order('item_number')
+
+  if (error) {
+    console.error('Error fetching products:', error)
+    return []
+  }
+
+  return data
+}
+
+// Helper function to get customer's assigned products
+export async function getCustomerProductIds(customerId: string) {
+  const { data, error } = await supabase
+    .from('customer_products')
+    .select('product_id')
+    .eq('customer_id', customerId)
+
+  if (error) {
+    console.error('Error fetching customer products:', error)
+    return []
+  }
+
+  return data.map(item => item.product_id)
+}
+
+// Helper function to add products to a customer
+export async function addProductsToCustomer(customerId: string, productIds: string[]) {
+  if (!customerId || !productIds.length) {
+    console.error('Error: customerId and productIds are required.')
+    return { success: false, message: 'Missing required parameters' }
+  }
+
+  // Format data for insertion
+  const customerProducts = productIds.map(productId => ({
+    customer_id: customerId,
+    product_id: productId,
+    created_at: new Date().toISOString()
+  }))
+
+  const { error } = await supabase
+    .from('customer_products')
+    .upsert(customerProducts, { onConflict: 'customer_id,product_id' })
+
+  if (error) {
+    console.error('Error adding products to customer:', error)
+    return { success: false, message: error.message }
+  }
+
+  return { success: true }
+}
+
+// Helper function to remove products from a customer
+export async function removeProductsFromCustomer(customerId: string, productIds: string[]) {
+  if (!customerId || !productIds.length) {
+    console.error('Error: customerId and productIds are required.')
+    return { success: false, message: 'Missing required parameters' }
+  }
+
+  const { error } = await supabase
+    .from('customer_products')
+    .delete()
+    .eq('customer_id', customerId)
+    .in('product_id', productIds)
+
+  if (error) {
+    console.error('Error removing products from customer:', error)
+    return { success: false, message: error.message }
+  }
+
+  return { success: true }
+}
+
+// Helper function to create a new customer with products
+export async function createCustomerWithProducts(
+  customerData: Omit<Customer, 'id' | 'created_at' | 'updated_at'>, 
+  productIds: string[]
+) {
+  // Create the customer
+  const { data: customer, error: customerError } = await supabase
+    .from('customer')
+    .insert({
+      ...customerData,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    })
+    .select()
+    .single()
+
+  if (customerError) {
+    console.error('Error creating customer:', customerError)
+    return { success: false, message: customerError.message }
+  }
+
+  // If there are products to add, add them
+  if (productIds.length > 0) {
+    const result = await addProductsToCustomer(customer.id, productIds)
+    if (!result.success) {
+      return result
+    }
+  }
+
+  return { success: true, customer }
+}
+
 // Helper function to create an order
 export async function createOrder(
   customerId: string,

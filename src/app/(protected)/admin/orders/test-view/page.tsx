@@ -48,9 +48,6 @@ export default async function TestView() {
               <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 ID Format
               </th>
-              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Actions
-              </th>
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
@@ -67,11 +64,6 @@ export default async function TestView() {
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                   {typeof order.id} ({order.id.length} chars)
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-blue-600">
-                  <a href={`/admin/orders/${encodeURIComponent(order.id)}`} target="_blank" rel="noopener noreferrer">
-                    View in new tab
-                  </a>
                 </td>
               </tr>
             ))}

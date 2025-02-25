@@ -6,7 +6,7 @@ import { motion } from 'framer-motion'
 import { useRouter } from 'next/navigation'
 import { useCart } from '@/hooks/useCart'
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
-import { isWithinOrderWindow, getNextBusinessDay, getValidBusinessDays } from '@/lib/utils/orderUtils'
+import { isWithinOrderWindow, getNextBusinessDay, getValidBusinessDays, isPublicHoliday } from '@/lib/utils/orderUtils'
 import { AlertCircle, Calendar, FileText, Check, Clock, CheckCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { TextArea } from '@/components/ui/input'
@@ -26,47 +26,125 @@ export function EnhancedOrderForm() {
     const [isSubmitting, setIsSubmitting] = useState(false)
     const [isSuccess, setIsSuccess] = useState(false)
 
-    // Check order window status on mount and every 5 minutes
+    // Check order window status on mount and every minute
     useEffect(() => {
       // Initial check
-      setOrderWindow(isWithinOrderWindow())
+      const initialWindow = isWithinOrderWindow()
+      setOrderWindow(initialWindow)
+      updateValidDeliveryDates(initialWindow.canScheduleNextDay)
       
-      // Set up interval - 5 minutes is enough for order window changes
+      // Set up interval - check more frequently (every minute) to catch the cutoff time exactly
       const interval = setInterval(() => {
         const currentWindow = isWithinOrderWindow()
-        setOrderWindow(currentWindow)
         
-        // If the order window closes, we need to update delivery dates
-        if (!currentWindow.allowed) {
-          updateValidDeliveryDates()
+        // Only update if the canScheduleNextDay status has changed
+        if (currentWindow.canScheduleNextDay !== orderWindow.canScheduleNextDay) {
+          console.log('Order window changed', { 
+            previous: orderWindow.canScheduleNextDay, 
+            current: currentWindow.canScheduleNextDay 
+          })
+          setOrderWindow(currentWindow)
+          // Update delivery dates when the order window changes
+          updateValidDeliveryDates(currentWindow.canScheduleNextDay)
         }
-      }, 5 * 60 * 1000) // 5 minutes
+      }, 60 * 1000) // Check every minute
 
       return () => clearInterval(interval)
-    }, [])
+    }, [orderWindow.canScheduleNextDay])
 
     // Generate valid delivery dates that are business days
-    const updateValidDeliveryDates = () => {
-      const validDates = getValidBusinessDays(30) // Get next 30 days of valid business days
+    const updateValidDeliveryDates = (canScheduleNextDay = orderWindow.canScheduleNextDay) => {
+      let validDates = getValidBusinessDays(30) // Get next 30 days of valid business days
+      
+      // If after cutoff, remove next business day from available options
+      if (!canScheduleNextDay) {
+        const nextBusinessDay = getNextBusinessDay()
+        // Filter out the next business day from the options
+        validDates = validDates.filter(date => 
+          !(date.getFullYear() === nextBusinessDay.getFullYear() &&
+            date.getMonth() === nextBusinessDay.getMonth() &&
+            date.getDate() === nextBusinessDay.getDate())
+        )
+      }
+      
       setValidDeliveryDates(validDates)
       
-      // Set default to next business day
-      const nextBusinessDay = getNextBusinessDay()
-      setDeliveryDate(nextBusinessDay.toISOString().split('T')[0])
+      // Set default delivery date
+      if (validDates.length > 0) {
+        // Use the first available date as default
+        setDeliveryDate(validDates[0].toISOString().split('T')[0])
+      }
     }
 
     // Initialize delivery dates on component mount
     useEffect(() => {
-      updateValidDeliveryDates()
+      updateValidDeliveryDates(orderWindow.canScheduleNextDay)
     }, [])
+    
+    // Update selected delivery date when validDeliveryDates changes
+    useEffect(() => {
+      if (validDeliveryDates.length > 0) {
+        // Check if current delivery date is still valid
+        const currentDateStr = deliveryDate
+        const validDateStrings = validDeliveryDates.map(date => date.toISOString().split('T')[0])
+        
+        if (!validDateStrings.includes(currentDateStr)) {
+          // If current date is not valid, select the first available date
+          console.log('Updating delivery date as current selection is not valid anymore', {
+            current: currentDateStr,
+            newDate: validDeliveryDates[0].toISOString().split('T')[0],
+            validDates: validDateStrings
+          })
+          setDeliveryDate(validDeliveryDates[0].toISOString().split('T')[0])
+        }
+      }
+    }, [validDeliveryDates])
 
     const handleSubmit = async (e: React.FormEvent) => {
       e.preventDefault()
-      if (!isWithinOrderWindow().allowed) {
-        setError('Orders are only accepted before 3:00 PM for next-day delivery')
+      
+      // Validate delivery date
+      if (!deliveryDate) {
+        setError('Please select a delivery date')
         return
       }
-  
+      
+      // Check if the selected delivery date is valid and available for selection
+      const selectedDate = new Date(deliveryDate)
+      
+      // Debug logging
+      console.log('Delivery date validation:', {
+        selectedDateString: deliveryDate,
+        selectedDate,
+        validDatesStrings: validDeliveryDates.map(d => d.toISOString().split('T')[0]),
+        validDates: validDeliveryDates
+      })
+      
+      // Convert all to ISO date strings for reliable comparison
+      const selectedDateString = deliveryDate.split('T')[0]
+      const validDateStrings = validDeliveryDates.map(date => 
+        date.toISOString().split('T')[0]
+      )
+      
+      // Check if the selected date is in our list of valid dates
+      if (!validDateStrings.includes(selectedDateString)) {
+        console.log('Date validation failed', {
+          selectedDateString,
+          validDateStrings
+        })
+        
+        // Auto-correct by setting to first available date
+        if (validDeliveryDates.length > 0) {
+          const newDate = validDeliveryDates[0].toISOString().split('T')[0]
+          setDeliveryDate(newDate)
+          setError('Your selected delivery date was not valid. We\'ve selected the next available date for you.')
+          return
+        } else {
+          setError('No valid delivery dates are available. Please try again later.')
+          return
+        }
+      }
+      
       setLoading(true)
       setError(null)
       setIsSubmitting(true)
@@ -193,14 +271,10 @@ export function EnhancedOrderForm() {
   
     return (
         <div className="space-y-6">
-          <div className={`p-4 rounded-lg border ${orderWindow.allowed ? 'bg-green-50 border-green-100' : 'bg-amber-50 border-amber-100'}`}>
+          <div className={`p-4 rounded-lg border ${orderWindow.canScheduleNextDay ? 'bg-green-50 border-green-100' : 'bg-amber-50 border-amber-100'}`}>
             <div className="flex items-center">
-              {orderWindow.allowed ? (
-                <Clock className="h-5 w-5 text-green-500 mr-2 flex-shrink-0" />
-              ) : (
-                <AlertCircle className="h-5 w-5 text-amber-500 mr-2 flex-shrink-0" />
-              )}
-              <p className={`text-sm ${orderWindow.allowed ? 'text-green-700' : 'text-amber-700'}`}>
+              <Clock className={`h-5 w-5 mr-2 flex-shrink-0 ${orderWindow.canScheduleNextDay ? 'text-green-500' : 'text-amber-500'}`} />
+              <p className={`text-sm ${orderWindow.canScheduleNextDay ? 'text-green-700' : 'text-amber-700'}`}>
                 {orderWindow.message}
               </p>
             </div>
@@ -234,22 +308,22 @@ export function EnhancedOrderForm() {
                 onChange={(e) => setDeliveryDate(e.target.value)}
                 className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
               >
-                {validDeliveryDates.map((date) => {
-                  const dateStr = date.toISOString().split('T')[0];
-                  const displayDate = date.toLocaleDateString('en-US', { 
-                    weekday: 'short', 
-                    month: 'short', 
-                    day: 'numeric' 
-                  });
-                  
-                  return (
-                    <option key={dateStr} value={dateStr}>
-                      {displayDate}
-                    </option>
-                  );
-                })}
-                
-                {validDeliveryDates.length === 0 && (
+                {validDeliveryDates.length > 0 ? (
+                  validDeliveryDates.map((date) => {
+                    const dateStr = date.toISOString().split('T')[0];
+                    const displayDate = date.toLocaleDateString('en-US', { 
+                      weekday: 'short', 
+                      month: 'short', 
+                      day: 'numeric' 
+                    });
+                    
+                    return (
+                      <option key={dateStr} value={dateStr}>
+                        {displayDate}
+                      </option>
+                    );
+                  })
+                ) : (
                   <option value="">Loading delivery dates...</option>
                 )}
               </select>
@@ -286,12 +360,12 @@ export function EnhancedOrderForm() {
               
               <Button
                 type="submit"
-                disabled={loading || items.length === 0 || !orderWindow.allowed || isSubmitting}
+                disabled={loading || items.length === 0 || isSubmitting}
                 fullWidth
                 icon={isSubmitting ? <Clock className="animate-spin" /> : <Check />}
                 isLoading={isSubmitting}
               >
-                {isSubmitting ? 'Processing...' : orderWindow.allowed ? 'Place Order' : 'Ordering Closed'}
+                {isSubmitting ? 'Processing...' : 'Place Order'}
               </Button>
             </div>
           </form>

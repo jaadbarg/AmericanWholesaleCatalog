@@ -4,7 +4,7 @@ import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { isAdmin } from '@/lib/utils/adminUtils';
 import Link from 'next/link';
-import { BarChart3, PackageOpen, Users, Truck, Clock, Settings } from 'lucide-react';
+import { BarChart3, PackageOpen, Users, Truck, Clock, Settings, UserPlus } from 'lucide-react';
 
 export default async function AdminDashboardPage() {
   const supabase = createServerComponentClient({ cookies });
@@ -224,6 +224,13 @@ export default async function AdminDashboardPage() {
             >
               <Users className="h-4 w-4 mr-2" />
               View All Customers
+            </Link>
+            <Link 
+              href="/admin/customers/new"
+              className="flex items-center px-4 py-2 bg-green-50 hover:bg-green-100 text-green-700 rounded-md transition-colors"
+            >
+              <UserPlus className="h-4 w-4 mr-2" />
+              Add New Customer
             </Link>
           </div>
         </div>

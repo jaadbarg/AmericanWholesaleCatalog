@@ -55,43 +55,50 @@ export function EnhancedCartSummary() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.8 }}
-            className="flex items-center justify-between p-4 bg-white rounded-lg border border-gray-100 hover:border-gray-200 hover:shadow-sm transition-all"
+            className="p-4 bg-white rounded-lg border border-gray-100 hover:border-gray-200 hover:shadow-sm transition-all"
           >
-            <div className="flex-1 min-w-0">
-              <div className="flex flex-col sm:flex-row sm:items-center">
-                <Badge variant="primary" size="sm" className="mb-1 sm:mb-0 sm:mr-2 w-fit">
+            <div className="flex flex-col gap-3">
+              {/* Item info row - item number and delete button */}
+              <div className="flex justify-between items-center">
+                <Badge variant="primary" size="sm" className="w-fit text-md whitespace-nowrap font-mono">
                   {item.item_number}
                 </Badge>
-                <h3 className="font-medium text-gray-800 truncate">{item.description}</h3>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-3 ml-4">
-              <div className="flex items-center">
+                
                 <Button
-                  onClick={() => updateQuantity(item.id, Math.max(1, item.quantity - 1))}
+                  onClick={() => removeItem(item.id)}
                   variant="ghost"
                   size="sm"
-                  className="p-1 text-gray-500 hover:text-blue-600"
-                  icon={<Minus size={16} />}
-                />
-                <span className="w-8 text-center font-medium text-gray-800">{item.quantity}</span>
-                <Button
-                  onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                  variant="ghost"
-                  size="sm"
-                  className="p-1 text-gray-500 hover:text-blue-600"
-                  icon={<Plus size={16} />}
+                  className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                  icon={<Trash2 size={16} />}
                 />
               </div>
-
-              <Button
-                onClick={() => removeItem(item.id)}
-                variant="ghost"
-                size="sm"
-                className="text-red-500 hover:text-red-700 hover:bg-red-50"
-                icon={<Trash2 size={16} />}
-              />
+              
+              {/* Item description */}
+              <div>
+                <h3 className="font-medium text-gray-800">{item.description}</h3>
+              </div>
+              
+              {/* Quantity controls in their own row */}
+              <div className="flex items-center mt-1">
+                <div className="flex items-center border rounded-md bg-gray-50">
+                  <Button
+                    onClick={() => updateQuantity(item.id, Math.max(1, item.quantity - 1))}
+                    variant="ghost"
+                    size="sm"
+                    className="p-1 text-gray-500 hover:text-blue-600"
+                    icon={<Minus size={16} />}
+                  />
+                  <span className="w-12 text-center font-medium text-gray-800">{item.quantity}</span>
+                  <Button
+                    onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                    variant="ghost"
+                    size="sm"
+                    className="p-1 text-gray-500 hover:text-blue-600"
+                    icon={<Plus size={16} />}
+                  />
+                </div>
+                <span className="ml-3 text-sm text-gray-500">units</span>
+              </div>
             </div>
           </motion.div>
         ))}

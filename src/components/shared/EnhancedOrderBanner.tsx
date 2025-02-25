@@ -73,7 +73,7 @@ export default function EnhancedOrderBanner() {
     <AnimatePresence>
       <motion.div 
         className={`fixed top-0 left-0 right-0 z-50 ${
-          orderWindow.allowed ? 'bg-blue-900' : 'bg-amber-600'
+          orderWindow.canScheduleNextDay ? 'bg-blue-900' : 'bg-amber-600'
         } text-white`}
         initial={{ y: -100 }}
         animate={{ y: 0 }}
@@ -84,18 +84,14 @@ export default function EnhancedOrderBanner() {
           <div className="flex items-center justify-between">
             <div className="flex items-center justify-center flex-1">
               <div className="flex items-center">
-                {orderWindow.allowed ? (
-                  <Clock className="h-4 w-4 mr-2 flex-shrink-0" />
-                ) : (
-                  <Info className="h-4 w-4 mr-2 flex-shrink-0" />
-                )}
+                <Clock className="h-4 w-4 mr-2 flex-shrink-0" />
                 <p className="text-sm">
-                  {orderWindow.allowed ? (
+                  {orderWindow.canScheduleNextDay ? (
                     <>
                       Orders placed before <span className="font-bold">3:00 PM</span> will be delivered next business day
                       {remainingTime && (
                         <Badge 
-                          variant={orderWindow.allowed ? 'primary' : 'warning'} 
+                          variant="primary" 
                           className="ml-2 bg-white/20"
                           rounded
                         >
@@ -105,7 +101,7 @@ export default function EnhancedOrderBanner() {
                     </>
                   ) : (
                     <>
-                      Order cutoff time has passed. Orders placed now will be processed tomorrow.
+                      After 3:00 PM cutoff. Next-day delivery is not available.
                     </>
                   )}
                 </p>
@@ -122,7 +118,7 @@ export default function EnhancedOrderBanner() {
         </div>
         
         {/* Animated progress bar showing time until cutoff */}
-        {orderWindow.allowed && (
+        {orderWindow.canScheduleNextDay && (
           <motion.div 
             className="h-0.5 bg-white/30"
             initial={{ width: "100%" }}
