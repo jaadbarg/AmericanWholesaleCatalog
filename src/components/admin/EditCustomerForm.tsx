@@ -127,16 +127,15 @@ export default function EditCustomerForm({ customer, initialProducts }: EditCust
     setSuccess(false)
     
     try {
-      // 1. Update customer information using admin RPC (to bypass RLS)
-      // Only passing name and email as those are the only fields in the database
-      const { error: updateError } = await supabase.rpc('admin_update_customer', {
-        customer_id_param: customer.id,
-        customer_name: name,
-        customer_email: email
-      })
-      
-      if (updateError) {
-        throw new Error(updateError.message || 'Failed to update customer')
+      // 1. Update customer information using our helper function
+      // Only update if name or email has changed
+      if (name !== customer.name || email !== customer.email) {
+        const { success: updateSuccess, message: updateMessage } = await import('@/lib/supabase/client')
+          .then(module => module.updateCustomer(customer.id, name, email));
+        
+        if (!updateSuccess) {
+          throw new Error(updateMessage || 'Failed to update customer');
+        }
       }
       
       // 2. Handle product changes if necessary
@@ -152,27 +151,23 @@ export default function EditCustomerForm({ customer, initialProducts }: EditCust
       const productsToRemove = Array.from(initialSelectedProductIds)
         .filter(id => !selectedProducts.has(id))
       
-      // Add new products using RPC
+      // Add new products
       if (productsToAdd.length > 0) {
-        const { error: addError } = await supabase.rpc('admin_assign_products', {
-          customer_id_param: customer.id,
-          product_ids_param: productsToAdd
-        })
+        const { success: addSuccess, message: addMessage } = await import('@/lib/supabase/client')
+          .then(module => module.addProductsToCustomer(customer.id, productsToAdd));
         
-        if (addError) {
-          throw new Error(`Error adding products: ${addError.message || 'Failed to add products'}`)
+        if (!addSuccess) {
+          throw new Error(`Error adding products: ${addMessage || 'Failed to add products'}`);
         }
       }
       
-      // Remove products using RPC
+      // Remove products
       if (productsToRemove.length > 0) {
-        const { error: removeError } = await supabase.rpc('admin_remove_products', {
-          customer_id_param: customer.id,
-          product_ids_param: productsToRemove
-        })
+        const { success: removeSuccess, message: removeMessage } = await import('@/lib/supabase/client')
+          .then(module => module.removeProductsFromCustomer(customer.id, productsToRemove));
         
-        if (removeError) {
-          throw new Error(`Error removing products: ${removeError.message || 'Failed to remove products'}`)
+        if (!removeSuccess) {
+          throw new Error(`Error removing products: ${removeMessage || 'Failed to remove products'}`);
         }
       }
       
@@ -203,13 +198,12 @@ export default function EditCustomerForm({ customer, initialProducts }: EditCust
     setError('')
     
     try {
-      // Use admin RPC to delete customer and all related data
-      const { error: deleteError } = await supabase.rpc('admin_delete_customer', {
-        customer_id_param: customer.id
-      })
+      // Use our helper function to delete customer and all related data
+      const { success: deleteSuccess, message: deleteMessage } = await import('@/lib/supabase/client')
+        .then(module => module.deleteCustomer(customer.id));
       
-      if (deleteError) {
-        throw new Error(`Error deleting customer: ${deleteError.message || 'Failed to delete customer'}`)
+      if (!deleteSuccess) {
+        throw new Error(`Error deleting customer: ${deleteMessage || 'Failed to delete customer'}`)
       }
       
       // Redirect back to customers list

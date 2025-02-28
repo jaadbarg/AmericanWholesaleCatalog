@@ -1,20 +1,20 @@
-// src/app/loading.tsx
+// src/app/(protected)/loading.tsx
 'use client'
 
 import Image from 'next/image'
 import { useEffect, useState } from 'react'
 
-export default function Loading() {
+export default function ProtectedLoading() {
   const [loadingProgress, setLoadingProgress] = useState(0)
   
-  // Simulate loading progress
+  // Simulate loading progress - faster for authenticated routes
   useEffect(() => {
     const interval = setInterval(() => {
       setLoadingProgress(prev => {
-        const next = prev + Math.random() * 10
+        const next = prev + Math.random() * 15
         return next >= 100 ? 100 : next
       })
-    }, 200)
+    }, 150)
     
     return () => clearInterval(interval)
   }, [])
@@ -70,39 +70,33 @@ export default function Loading() {
       </div>
 
       {/* Main content */}
-      <div className="relative z-10 text-center bg-white p-10 rounded-xl shadow-xl border border-gray-100 max-w-md w-full">
-        <div className="mb-8 relative">
-          <div className="relative mx-auto w-32 h-32 flex items-center justify-center bg-blue-50 rounded-full p-4 border-4 border-blue-100">
+      <div className="relative z-10 text-center bg-white p-8 rounded-xl shadow-xl border border-gray-100 max-w-sm w-full">
+        <div className="mb-6 relative">
+          <div className="relative mx-auto w-24 h-24 flex items-center justify-center bg-blue-50 rounded-full p-3 border-4 border-blue-100">
             <Image 
               src="/favicon.png" 
               alt="American Wholesalers Logo" 
-              width={100} 
-              height={100}
+              width={80} 
+              height={80}
               className="animate-pulse"
             />
           </div>
-          
-          <div className="absolute -bottom-3 left-1/2 transform -translate-x-1/2 bg-blue-500 text-white px-4 py-1 rounded-full text-xs font-bold shadow-md">
-            WHOLESALE CATALOG
-          </div>
         </div>
         
-        <h1 className="text-2xl font-bold text-gray-800 mb-4">American Wholesalers</h1>
-        <p className="text-gray-600 mb-6">Loading your inventory management system...</p>
+        <h1 className="text-xl font-bold text-gray-800 mb-2">Loading Data</h1>
         
         {/* Progress bar */}
         <div className="relative mb-4">
-          <div className="h-3 w-full bg-gray-200 rounded-full overflow-hidden">
+          <div className="h-2 w-full bg-gray-200 rounded-full overflow-hidden">
             <div 
               className="h-full bg-blue-600 rounded-full transition-all duration-300 ease-out"
               style={{ width: `${loadingProgress}%` }}
             ></div>
           </div>
-          <div className="mt-2 text-sm text-gray-500 text-right">{Math.round(loadingProgress)}%</div>
         </div>
         
         {/* Loading message */}
-        <div className="text-sm text-gray-500 mt-6">
+        <div className="text-sm text-gray-500">
           <LoadingMessage />
         </div>
       </div>
@@ -113,13 +107,11 @@ export default function Loading() {
 // Rotating loading messages component
 function LoadingMessage() {
   const messages = [
-    "Stocking the shelves...",
-    "Organizing inventory...",
-    "Preparing your catalog...",
-    "Counting products...",
-    "Loading customer data...",
-    "Checking warehouse status...",
-    "Updating product information..."
+    "Loading your data...",
+    "Preparing items...",
+    "Updating inventory...",
+    "Almost ready...",
+    "Just a moment..."
   ]
   
   const [messageIndex, setMessageIndex] = useState(0)
@@ -127,7 +119,7 @@ function LoadingMessage() {
   useEffect(() => {
     const interval = setInterval(() => {
       setMessageIndex(prev => (prev + 1) % messages.length)
-    }, 2000)
+    }, 1500)
     
     return () => clearInterval(interval)
   }, [])

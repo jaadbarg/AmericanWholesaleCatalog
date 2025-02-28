@@ -198,21 +198,27 @@ export async function addProductsToCustomer(customerId: string, productIds: stri
   }
 
   try {
-    console.log("addProductsToCustomer - calling admin_assign_products with customerId:", customerId);
+    console.log("addProductsToCustomer - adding products to customerId:", customerId);
     console.log("addProductsToCustomer - productIds:", productIds);
     
-    // Use RPC function to assign products (bypasses RLS)
-    const { error, data } = await supabase.rpc('admin_assign_products', {
-      customer_id_param: customerId,
-      product_ids_param: productIds
-    })
+    // Call server API to add products
+    const response = await fetch('/api/admin/update-customer', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${process.env.NEXT_PUBLIC_ADMIN_API_KEY || 'test-api-key'}`
+      },
+      body: JSON.stringify({
+        customerId,
+        productsToAdd: productIds
+      })
+    });
     
-    console.log("addProductsToCustomer - response data:", data);
-    console.log("addProductsToCustomer - error:", error);
-
-    if (error) {
-      console.error('Error adding products to customer via RPC:', error)
-      return { success: false, message: error.message }
+    const result = await response.json();
+    
+    if (!response.ok) {
+      console.error('Error adding products to customer via API:', result.error)
+      return { success: false, message: result.error || 'Failed to add products' }
     }
 
     return { success: true }
@@ -233,18 +239,24 @@ export async function removeProductsFromCustomer(customerId: string, productIds:
     console.log("removeProductsFromCustomer - calling admin_remove_products with customerId:", customerId);
     console.log("removeProductsFromCustomer - productIds:", productIds);
     
-    // Use admin RPC function to remove products
-    const { error, data } = await supabase.rpc('admin_remove_products', {
-      customer_id_param: customerId,
-      product_ids_param: productIds
-    })
+    // Call server API to remove products
+    const response = await fetch('/api/admin/update-customer', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${process.env.NEXT_PUBLIC_ADMIN_API_KEY || 'test-api-key'}`
+      },
+      body: JSON.stringify({
+        customerId,
+        productsToRemove: productIds
+      })
+    });
     
-    console.log("removeProductsFromCustomer - response data:", data);
-    console.log("removeProductsFromCustomer - error:", error);
-
-    if (error) {
-      console.error('Error removing products from customer via admin RPC:', error)
-      return { success: false, message: error.message }
+    const result = await response.json();
+    
+    if (!response.ok) {
+      console.error('Error removing products from customer via API:', result.error)
+      return { success: false, message: result.error || 'Failed to remove products' }
     }
 
     return { success: true }
@@ -422,6 +434,49 @@ export async function createCustomerWithProducts(
   }
 }
 
+// Helper function to update customer information
+export async function updateCustomer(customerId: string, customerName?: string, customerEmail?: string) {
+  if (!customerId) {
+    console.error('Error: customerId is required.')
+    return { success: false, message: 'Missing required parameter: customerId' }
+  }
+
+  if (!customerName && !customerEmail) {
+    console.error('Error: at least one of customerName or customerEmail is required.')
+    return { success: false, message: 'No update data provided' }
+  }
+
+  try {
+    console.log("updateCustomer - updating customer:", customerId);
+    
+    // Call server API to update customer
+    const response = await fetch('/api/admin/update-customer', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${process.env.NEXT_PUBLIC_ADMIN_API_KEY || 'test-api-key'}`
+      },
+      body: JSON.stringify({
+        customerId,
+        customerName,
+        customerEmail
+      })
+    });
+    
+    const result = await response.json();
+    
+    if (!response.ok) {
+      console.error('Error updating customer via API:', result.error)
+      return { success: false, message: result.error || 'Failed to update customer' }
+    }
+
+    return { success: true }
+  } catch (error) {
+    console.error('Unexpected error in updateCustomer:', error)
+    return { success: false, message: error instanceof Error ? error.message : 'Unknown error occurred' }
+  }
+}
+
 // Helper function to create an order
 export async function createOrder(
   customerId: string,
@@ -488,4 +543,40 @@ export async function getOrderWithDetails(orderId: string) {
 
   if (orderError) throw orderError
   return order
+}
+
+// Helper function to delete a customer and all related data
+export async function deleteCustomer(customerId: string) {
+  if (!customerId) {
+    console.error('Error: customerId is required.')
+    return { success: false, message: 'Missing required parameter: customerId' }
+  }
+
+  try {
+    console.log("deleteCustomer - deleting customer:", customerId);
+    
+    // Call server API to delete customer
+    const response = await fetch('/api/admin/delete-customer', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${process.env.NEXT_PUBLIC_ADMIN_API_KEY || 'test-api-key'}`
+      },
+      body: JSON.stringify({
+        customerId
+      })
+    });
+    
+    const result = await response.json();
+    
+    if (!response.ok) {
+      console.error('Error deleting customer via API:', result.error)
+      return { success: false, message: result.error || 'Failed to delete customer' }
+    }
+
+    return { success: true }
+  } catch (error) {
+    console.error('Unexpected error in deleteCustomer:', error)
+    return { success: false, message: error instanceof Error ? error.message : 'Unknown error occurred' }
+  }
 }

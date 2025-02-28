@@ -2,11 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { Search, Filter, Save, CheckCircle, XCircle, Check } from 'lucide-react'
-import { 
-  addProductsToCustomer,
-  removeProductsFromCustomer,
-  Product
-} from '@/lib/supabase/client'
+import { Product } from '@/lib/supabase/client'
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
 import { useRouter } from 'next/navigation'
 
@@ -100,12 +96,33 @@ export function CustomerProductManager({
 
   // Filter products based on search and category
   const filteredProducts = products.filter(product => {
+    // First apply text search filter
     const matchesSearch = product.item_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
       product.description.toLowerCase().includes(searchTerm.toLowerCase())
     
-    const matchesCategory = categoryFilter === 'all' || product.category === categoryFilter
+    // Then apply standard category filter (only for regular categories)
+    const isSpecialCategory = categoryFilter === '__assigned__' || 
+                             categoryFilter === '__unassigned__' || 
+                             categoryFilter === '__changes__';
     
-    return matchesSearch && matchesCategory
+    const matchesCategory = isSpecialCategory || categoryFilter === 'all' || product.category === categoryFilter
+    
+    // Finally apply special filters
+    if (categoryFilter === '__assigned__') {
+      // Show only assigned products
+      return matchesSearch && product.selected;
+    } else if (categoryFilter === '__unassigned__') {
+      // Show only unassigned products
+      return matchesSearch && !product.selected;
+    } else if (categoryFilter === '__changes__') {
+      // Show only products with pending changes
+      const hasChanged = (product.selected && !assignedProducts.has(product.id)) || 
+                         (!product.selected && assignedProducts.has(product.id));
+      return matchesSearch && hasChanged;
+    }
+    
+    // Default case - apply standard search and category filters
+    return matchesSearch && matchesCategory;
   })
 
   // Stats
@@ -155,7 +172,6 @@ export function CustomerProductManager({
     setSaveError('')
     
     try {
-      // Already calculated above
       // Products to add - products that are now selected but weren't initially
       const toAdd = productsToAdd.map(p => p.id)
       
@@ -166,60 +182,35 @@ export function CustomerProductManager({
       console.log("Saving changes - products to add:", toAdd.length, toAdd);
       console.log("Saving changes - products to remove:", toRemove.length, toRemove);
       
-      // WORKAROUND: Try direct insert for debugging
-      if (toAdd.length > 0) {
-        try {
-          console.log("TESTING: Direct insert to customer_products for first product");
-          const testProductId = toAdd[0];
-          const { data: directData, error: directError } = await supabase
-            .from('customer_products')
-            .insert({
-              customer_id: customerId,
-              product_id: testProductId,
-              created_at: new Date().toISOString()
-            });
-            
-          console.log("Direct insert result:", { data: directData, error: directError });
-        } catch (directError) {
-          console.error("Direct insert error:", directError);
-        }
-      }
-      
-      // Now try the regular RPC functions
+      // Process additions first
       if (toAdd.length > 0) {
         console.log("Adding products with customerId:", customerId);
-        const result = await addProductsToCustomer(customerId, toAdd)
+        // Import the function dynamically to ensure we get the latest version
+        const { addProductsToCustomer } = await import('@/lib/supabase/client');
+        
+        const result = await addProductsToCustomer(customerId, toAdd);
         console.log("Add products result:", result);
+        
         if (!result.success) {
           throw new Error(result.message || 'Failed to add products')
         }
       }
       
+      // Then process removals
       if (toRemove.length > 0) {
         console.log("Removing products with customerId:", customerId);
-        const result = await removeProductsFromCustomer(customerId, toRemove)
+        // Import the function dynamically to ensure we get the latest version
+        const { removeProductsFromCustomer } = await import('@/lib/supabase/client');
+        
+        const result = await removeProductsFromCustomer(customerId, toRemove);
         console.log("Remove products result:", result);
+        
         if (!result.success) {
           throw new Error(result.message || 'Failed to remove products')
         }
       }
       
-      // Try calling the RPC function directly from here
-      if (toAdd.length > 0) {
-        try {
-          console.log("TESTING: Calling admin_assign_products directly from component");
-          const { data: directRpcData, error: directRpcError } = await supabase.rpc('admin_assign_products', {
-            customer_id_param: customerId,
-            product_ids_param: toAdd
-          });
-          
-          console.log("Direct RPC call result:", { data: directRpcData, error: directRpcError });
-        } catch (directRpcError) {
-          console.error("Direct RPC call error:", directRpcError);
-        }
-      }
-      
-      // Update the initialProducts reference and local state to reflect saved changes
+      // Update UI state
       setSaveSuccess(true)
       
       // After successful save, update our assignedProducts state to match current selection
@@ -451,24 +442,7 @@ export function CustomerProductManager({
 
         {/* Products grid */}
         <div className="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filteredProducts
-            // Apply special category filters
-            .filter(product => {
-              if (categoryFilter === '__assigned__') {
-                // Show products that are currently selected
-                return product.selected;
-              } else if (categoryFilter === '__unassigned__') {
-                // Show products that are not currently selected
-                return !product.selected;
-              } else if (categoryFilter === '__changes__') {
-                return (
-                  (product.selected && !assignedProducts.has(product.id)) || 
-                  (!product.selected && assignedProducts.has(product.id))
-                );
-              }
-              return true;
-            })
-            .map(product => {
+          {filteredProducts.map(product => {
               // Determine product status for styling
               const wasInitiallySelected = assignedProducts.has(product.id);
               const isNowSelected = product.selected;
@@ -534,22 +508,7 @@ export function CustomerProductManager({
               );
             })}
           
-          {filteredProducts
-            .filter(product => {
-              if (categoryFilter === '__assigned__') {
-                // Show products that are currently selected
-                return product.selected;
-              } else if (categoryFilter === '__unassigned__') {
-                // Show products that are not currently selected
-                return !product.selected;
-              } else if (categoryFilter === '__changes__') {
-                return (
-                  (product.selected && !assignedProducts.has(product.id)) || 
-                  (!product.selected && assignedProducts.has(product.id))
-                );
-              }
-              return true;
-            }).length === 0 && (
+          {filteredProducts.length === 0 && (
             <div className="col-span-full py-8 text-center text-gray-500">
               {categoryFilter === '__assigned__' ? (
                 <div>
