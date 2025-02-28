@@ -103,8 +103,12 @@ export function EnhancedSignInForm() {
         throw error
       }
 
+      // Check if user is admin and redirect accordingly
+      const isUserAdmin = normalizedEmail === 'admin@americanwholesalers.com';
+      const redirectPath = isUserAdmin ? '/admin' : '/products';
+      
       // Navigate only once
-      router.push('/products')
+      router.push(redirectPath)
       
       // Use refresh only after redirection to avoid multiple auth attempts
       setTimeout(() => {
