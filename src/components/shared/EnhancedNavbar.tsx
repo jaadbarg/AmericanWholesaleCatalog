@@ -101,10 +101,22 @@ export function EnhancedNavbar() {
   const navLinks = isAdminUser
     ? [
         { 
-          href: '/admin/orders', 
-          label: 'Admin Panel', 
+          href: '/admin', 
+          label: 'Admin Dashboard', 
           icon: <Shield size={18} className="mr-2" />,
-          active: pathname === '/admin/orders'
+          active: pathname === '/admin'
+        },
+        { 
+          href: '/admin/orders', 
+          label: 'Orders', 
+          icon: <Package size={18} className="mr-2" />,
+          active: pathname.startsWith('/admin/orders')
+        },
+        { 
+          href: '/admin/customers', 
+          label: 'Customers', 
+          icon: <User size={18} className="mr-2" />,
+          active: pathname.startsWith('/admin/customers') 
         }
       ]
     : [

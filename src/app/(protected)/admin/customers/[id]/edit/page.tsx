@@ -1,11 +1,11 @@
-// src/app/(protected)/admin/customers/[id]/products/page.tsx
+// src/app/(protected)/admin/customers/[id]/edit/page.tsx
 import { createServerComponentClient } from '@supabase/auth-helpers-nextjs';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { isAdmin } from '@/lib/utils/adminUtils';
 import Link from 'next/link';
-import { ArrowLeft, Search, Filter, Save } from 'lucide-react';
-import { CustomerProductManager } from '@/components/admin/CustomerProductManager';
+import { ArrowLeft } from 'lucide-react';
+import EditCustomerForm from '@/components/admin/EditCustomerForm';
 
 interface Props {
   params: {
@@ -13,7 +13,7 @@ interface Props {
   };
 }
 
-export default async function CustomerProductsPage({ params }: Props) {
+export default async function EditCustomerPage({ params }: Props) {
   const customerId = params.id;
   const supabase = createServerComponentClient({ cookies });
 
@@ -33,8 +33,8 @@ export default async function CustomerProductsPage({ params }: Props) {
   if (customerError || !customer) {
     redirect('/admin/customers');
   }
-
-  // Fetch customer's current products
+  
+  // Fetch customer's products
   const { data: customerProducts, error: productsError } = await supabase
     .from('customer_products')
     .select('product_id')
@@ -58,48 +58,31 @@ export default async function CustomerProductsPage({ params }: Props) {
   const customerProductIds = new Set(
     (customerProducts || []).map(cp => cp.product_id)
   );
-  
-  console.log("Customer product IDs:", Array.from(customerProductIds));
-  console.log("Total assigned products:", customerProductIds.size);
-  console.log("All products count:", allProducts?.length || 0);
 
   // Pre-process products with selection status
-  const products = (allProducts || []).map(product => {
-    const isSelected = customerProductIds.has(product.id);
-    // Debug individual product mapping
-    if (isSelected) {
-      console.log(`Product ${product.item_number} (${product.id}) is assigned to customer`);
-    }
-    
-    return {
-      ...product,
-      selected: isSelected
-    };
-  });
+  const products = (allProducts || []).map(product => ({
+    ...product,
+    selected: customerProductIds.has(product.id)
+  }));
 
   return (
     <div className="py-8">
-      <div className="flex justify-between items-center mb-8">
-        <div className="flex items-center gap-4">
-          <Link
-            href="/admin/customers"
-            className="p-2 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors"
-          >
-            <ArrowLeft className="h-5 w-5" />
-          </Link>
-          <div>
-            <h1 className="text-3xl font-bold">Manage Products</h1>
-            <p className="text-gray-500">
-              {customer.name} <span className="text-gray-400">({customer.email})</span>
-            </p>
-          </div>
+      <div className="flex items-center gap-4 mb-8">
+        <Link
+          href={`/admin/customers/${encodeURIComponent(customerId)}`}
+          className="p-2 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors"
+        >
+          <ArrowLeft className="h-5 w-5" />
+        </Link>
+        <div>
+          <h1 className="text-3xl font-bold">Edit Customer</h1>
+          <p className="text-gray-500">{customer.name}</p>
         </div>
       </div>
 
-      <CustomerProductManager
-        customerId={customerId}
+      <EditCustomerForm 
+        customer={customer}
         initialProducts={products}
-        customerName={customer.name}
       />
     </div>
   );

@@ -31,9 +31,11 @@ export function CustomerProductManager({
   // Debug log when component receives props
   console.log("CustomerProductManager - initialProducts count:", initialProducts.length);
   console.log("CustomerProductManager - initially selected products:", initialProducts.filter(p => p.selected).length);
+  
+  // List the initially selected product IDs for debugging
   console.log("Initially selected product IDs:", initialProducts.filter(p => p.selected).map(p => p.id));
   
-  // Initialize states
+  // Initialize states 
   const [products, setProducts] = useState<ExtendedProduct[]>(initialProducts)
   const [searchTerm, setSearchTerm] = useState('')
   const [categoryFilter, setCategoryFilter] = useState<string>('all')
@@ -41,16 +43,24 @@ export function CustomerProductManager({
   const [saveSuccess, setSaveSuccess] = useState(false)
   const [saveError, setSaveError] = useState('')
   
-  // Track which products are actually assigned in the database
+  // Create a state variable to track database-assigned products
   const [assignedProducts, setAssignedProducts] = useState<Set<string>>(
     new Set(initialProducts.filter(p => p.selected).map(p => p.id))
   );
   
-  // Log state for debugging
+  // Log for selected products for better debugging
   useEffect(() => {
     console.log("CURRENT PRODUCTS STATE:", products.filter(p => p.selected).length, "selected out of", products.length);
     console.log("ASSIGNED PRODUCTS STATE:", Array.from(assignedProducts).length, "products");
   }, [products, assignedProducts]);
+  const [saving, setSaving] = useState(false)
+  const [saveSuccess, setSaveSuccess] = useState(false)
+  const [saveError, setSaveError] = useState('')
+  
+  // Create a state variable to track database-assigned products
+  const [assignedProducts, setAssignedProducts] = useState<Set<string>>(
+    new Set(initialProducts.filter(p => p.selected).map(p => p.id))
+  );
   
   // Direct query to check customer_products table and update product selection
   useEffect(() => {
@@ -91,6 +101,8 @@ export function CustomerProductManager({
     checkCustomerProducts();
   }, [customerId, supabase]);
   
+  // This block is now deleted to avoid duplicate state declarations
+  
   // Get unique categories from products
   const categories = ['all', ...Array.from(new Set(
     initialProducts
@@ -111,6 +123,7 @@ export function CustomerProductManager({
   // Stats
   const totalProducts = products.length
   const selectedProducts = products.filter(p => p.selected).length
+  
   
   // Get current selection
   const currentSelectedIds = new Set(products.filter(p => p.selected).map(p => p.id))
@@ -233,6 +246,8 @@ export function CustomerProductManager({
       // Log the new selection state for debugging
       console.log("Updated selection after save:", selectedProductIds);
       
+      // Don't refresh the page, which would cause the component to remount and lose state
+  // Instead, we've already updated our local state above to reflect the saved changes
     } catch (error) {
       console.error('Error saving product changes:', error)
       setSaveError(error instanceof Error ? error.message : 'An unknown error occurred')

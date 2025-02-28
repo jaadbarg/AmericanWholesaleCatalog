@@ -27,7 +27,7 @@ export default async function CancelledOrdersPage() {
       updated_at,
       delivery_date,
       notes,
-      customer:customer_id (id, name, email),
+      customer:customers(id, name, email),
       order_items (id, quantity, product_id)
     `)
     .eq('status', 'cancelled')

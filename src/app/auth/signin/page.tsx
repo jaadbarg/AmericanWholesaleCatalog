@@ -28,7 +28,7 @@ export default async function SignIn() {
           />
           <h1 className="text-4xl font-bold mb-6">American Wholesalers</h1>
           <p className="text-xl mb-8 text-blue-100">
-            Premium restaurant supplies for Upstate NY's finest establishments
+            Premium wholesale supplies for Upstate NY's finest establishments
           </p>
           {/* <div className="bg-blue-800/50 rounded-lg p-6 backdrop-blur-sm">
             <p className="italic text-blue-200">

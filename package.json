@@ -1,35 +1,17 @@
 {
-  "name": "american-wholesalers",
-  "version": "0.1.0",
-  "private": true,
+  "name": "ai",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
-    "lint": "next lint"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node index.js"
   },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
   "dependencies": {
-    "@supabase/auth-helpers-nextjs": "^0.10.0",
-    "@supabase/supabase-js": "^2.47.9",
-    "date-fns": "^4.1.0",
-    "framer-motion": "^11.15.0",
-    "lucide-react": "^0.468.0",
-    "next": "15.1.1",
-    "react": "^19.0.0",
-    "react-dom": "^19.0.0",
-    "resend": "^4.1.1",
-    "supabase": "^2.1.1",
-    "zustand": "^5.0.2"
-  },
-  "devDependencies": {
-    "@eslint/eslintrc": "^3",
-    "@types/node": "^20",
-    "@types/react": "^19",
-    "@types/react-dom": "^19",
-    "eslint": "^9",
-    "eslint-config-next": "15.1.1",
-    "postcss": "^8",
-    "tailwindcss": "^3.4.1",
-    "typescript": "^5"
+    "@supabase/supabase-js": "^2.49.1",
+    "dotenv": "^16.4.7"
   }
 }

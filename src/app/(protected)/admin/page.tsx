@@ -4,7 +4,7 @@ import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { isAdmin } from '@/lib/utils/adminUtils';
 import Link from 'next/link';
-import { BarChart3, PackageOpen, Users, Truck, Clock, Settings, UserPlus } from 'lucide-react';
+import { BarChart3, PackageOpen, Users, Truck, Clock, Settings, UserPlus, Upload, FilePlus, Layers } from 'lucide-react';
 
 export default async function AdminDashboardPage() {
   const supabase = createServerComponentClient({ cookies });
@@ -28,7 +28,7 @@ export default async function AdminDashboardPage() {
     // Total orders count
     supabase.from('orders').select('id', { count: 'exact' }),
     // Total customers count
-    supabase.from('customer').select('id', { count: 'exact' }),
+    supabase.from('customers').select('id', { count: 'exact' }),
     // Total products count
     supabase.from('products').select('id', { count: 'exact' }),
     // Recent orders (last 5)
@@ -40,7 +40,7 @@ export default async function AdminDashboardPage() {
         status,
         created_at,
         delivery_date,
-        customer:customer_id (name, email)
+        customer:customers(name, email)
       `)
       .order('created_at', { ascending: false })
       .limit(5)
@@ -232,6 +232,13 @@ export default async function AdminDashboardPage() {
               <UserPlus className="h-4 w-4 mr-2" />
               Add New Customer
             </Link>
+            <Link 
+              href="/admin/customers/import"
+              className="flex items-center px-4 py-2 bg-green-50 hover:bg-green-100 text-green-700 rounded-md transition-colors"
+            >
+              <Upload className="h-4 w-4 mr-2" />
+              Import Customers
+            </Link>
           </div>
         </div>
 
@@ -244,6 +251,20 @@ export default async function AdminDashboardPage() {
             >
               <Truck className="h-4 w-4 mr-2" />
               Manage Products
+            </Link>
+            <Link 
+              href="/admin/products/new"
+              className="flex items-center px-4 py-2 bg-purple-50 hover:bg-purple-100 text-purple-700 rounded-md transition-colors"
+            >
+              <FilePlus className="h-4 w-4 mr-2" />
+              Add New Product
+            </Link>
+            <Link 
+              href="/admin/customers/products"
+              className="flex items-center px-4 py-2 bg-purple-50 hover:bg-purple-100 text-purple-700 rounded-md transition-colors"
+            >
+              <Layers className="h-4 w-4 mr-2" />
+              Customer Products
             </Link>
           </div>
         </div>

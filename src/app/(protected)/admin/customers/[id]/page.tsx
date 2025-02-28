@@ -35,7 +35,7 @@ export default async function CustomerDetailPage({ params }: Props) {
 
   // Fetch customer
   const { data: customer, error: customerError } = await supabase
-    .from('customer')
+    .from('customers')
     .select('*')
     .eq('id', customerId)
     .single();

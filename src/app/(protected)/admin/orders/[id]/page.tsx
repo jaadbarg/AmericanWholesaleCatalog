@@ -39,7 +39,7 @@ export default async function AdminOrderDetailPage(props: any) {
         updated_at,
         delivery_date,
         notes,
-        customer:customer_id (id, name, email, phone, address, company),
+        customer:customers(id, name, email, phone, address, company),
         order_items (id, quantity, product_id)
       `)
       .eq('id', orderId)

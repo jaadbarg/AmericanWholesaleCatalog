@@ -18,7 +18,7 @@ export default async function AdminCustomersPage() {
 
   // Fetch customers
   const { data: customers, error } = await supabase
-    .from('customer')
+    .from('customers')
     .select('*')
     .order('name');
 
@@ -109,12 +109,12 @@ export default async function AdminCustomersPage() {
                       >
                         Edit
                       </Link>
-                      <span className="text-gray-300">|</span>
+                      {/* <span className="text-gray-300">|</span>
                       <button
                         className="text-red-500 hover:text-red-700 font-medium text-sm"
                       >
                         Delete
-                      </button>
+                      </button> */}
                     </div>
                   </td>
                 </tr>

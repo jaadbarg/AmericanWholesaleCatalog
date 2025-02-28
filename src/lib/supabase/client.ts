@@ -8,7 +8,30 @@ if (!supabaseUrl || !supabaseAnonKey) {
   throw new Error('Missing Supabase environment variables')
 }
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey)
+// Regular client for user operations - safe for client-side
+export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+  auth: {
+    persistSession: true,
+    autoRefreshToken: true
+  }
+})
+
+// Admin client for admin operations - ONLY for server-side use
+// This will be null on the client side for safety
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+export const adminSupabase = typeof window === 'undefined' && supabaseServiceKey 
+  ? createClient(supabaseUrl, supabaseServiceKey, {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false
+      }
+    })
+  : null
+
+// Utility function to generate random password
+function generateRandomPassword(): string {
+  return crypto.randomUUID() + crypto.randomUUID(); // Generates a sufficiently long random string
+}
 
 // Database Types
 export type Profile = {
@@ -125,7 +148,7 @@ export async function updateProductNotes(customerId: string, productId: string, 
 // Helper function to get all customers
 export async function getAllCustomers() {
   const { data, error } = await supabase
-    .from('customer')
+    .from('customers')
     .select('*')
     .order('name')
 
@@ -174,23 +197,29 @@ export async function addProductsToCustomer(customerId: string, productIds: stri
     return { success: false, message: 'Missing required parameters' }
   }
 
-  // Format data for insertion
-  const customerProducts = productIds.map(productId => ({
-    customer_id: customerId,
-    product_id: productId,
-    created_at: new Date().toISOString()
-  }))
+  try {
+    console.log("addProductsToCustomer - calling admin_assign_products with customerId:", customerId);
+    console.log("addProductsToCustomer - productIds:", productIds);
+    
+    // Use RPC function to assign products (bypasses RLS)
+    const { error, data } = await supabase.rpc('admin_assign_products', {
+      customer_id_param: customerId,
+      product_ids_param: productIds
+    })
+    
+    console.log("addProductsToCustomer - response data:", data);
+    console.log("addProductsToCustomer - error:", error);
 
-  const { error } = await supabase
-    .from('customer_products')
-    .upsert(customerProducts, { onConflict: 'customer_id,product_id' })
+    if (error) {
+      console.error('Error adding products to customer via RPC:', error)
+      return { success: false, message: error.message }
+    }
 
-  if (error) {
-    console.error('Error adding products to customer:', error)
-    return { success: false, message: error.message }
+    return { success: true }
+  } catch (error) {
+    console.error('Unexpected error in addProductsToCustomer:', error)
+    return { success: false, message: error instanceof Error ? error.message : 'Unknown error occurred' }
   }
-
-  return { success: true }
 }
 
 // Helper function to remove products from a customer
@@ -200,50 +229,197 @@ export async function removeProductsFromCustomer(customerId: string, productIds:
     return { success: false, message: 'Missing required parameters' }
   }
 
-  const { error } = await supabase
-    .from('customer_products')
-    .delete()
-    .eq('customer_id', customerId)
-    .in('product_id', productIds)
+  try {
+    console.log("removeProductsFromCustomer - calling admin_remove_products with customerId:", customerId);
+    console.log("removeProductsFromCustomer - productIds:", productIds);
+    
+    // Use admin RPC function to remove products
+    const { error, data } = await supabase.rpc('admin_remove_products', {
+      customer_id_param: customerId,
+      product_ids_param: productIds
+    })
+    
+    console.log("removeProductsFromCustomer - response data:", data);
+    console.log("removeProductsFromCustomer - error:", error);
 
-  if (error) {
-    console.error('Error removing products from customer:', error)
-    return { success: false, message: error.message }
+    if (error) {
+      console.error('Error removing products from customer via admin RPC:', error)
+      return { success: false, message: error.message }
+    }
+
+    return { success: true }
+  } catch (error) {
+    console.error('Unexpected error in removeProductsFromCustomer:', error)
+    return { success: false, message: error instanceof Error ? error.message : 'Unknown error occurred' }
   }
+}
 
-  return { success: true }
+// Helper function to generate a more secure random password
+function generateSecurePassword(): string {
+  // Create a strong password with mixed characters
+  const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
+  const numbers = '0123456789';
+  const specials = '!@#$%^&*()_+{}|:<>?';
+  
+  let password = '';
+  
+  // Add at least one of each character type
+  password += letters.charAt(Math.floor(Math.random() * letters.length));
+  password += letters.toLowerCase().charAt(Math.floor(Math.random() * letters.length));
+  password += numbers.charAt(Math.floor(Math.random() * numbers.length));
+  password += specials.charAt(Math.floor(Math.random() * specials.length));
+  
+  // Add more random characters to reach desired length
+  for (let i = 0; i < 8; i++) {
+    const allChars = letters + numbers + specials;
+    password += allChars.charAt(Math.floor(Math.random() * allChars.length));
+  }
+  
+  // Shuffle the password
+  return password.split('').sort(() => 0.5 - Math.random()).join('');
 }
 
 // Helper function to create a new customer with products
+// NOTE: This function will NOT work on the client side as it requires admin privileges
+// It should only be called from server-side code (API routes, Server Actions, etc.)
 export async function createCustomerWithProducts(
-  customerData: Omit<Customer, 'id' | 'created_at' | 'updated_at'>, 
-  productIds: string[]
+  customerData: Omit<Customer, 'id' | 'created_at' | 'updated_at'>,
+  productIds: string[] = []
 ) {
-  // Create the customer
-  const { data: customer, error: customerError } = await supabase
-    .from('customer')
-    .insert({
-      ...customerData,
+  try {
+    // Check if we have access to the admin client (server-side only)
+    if (!adminSupabase) {
+      console.error('Admin operations can only be performed server-side');
+      return { 
+        success: false, 
+        message: 'This function can only be called from server-side code. Use the API route instead.' 
+      };
+    }
+
+    // Step 1: Create the auth user first (mandatory)
+    console.log("Step 1: Creating auth user with email:", customerData.email);
+    const tempPassword = 'Welcome123!'; // Fixed password for now
+    
+    const { data: userData, error: createUserError } = await adminSupabase.auth.admin.createUser({
+      email: customerData.email,
+      password: tempPassword,
+      user_metadata: { name: customerData.name },
+      email_confirm: true // Auto-confirm email
+    });
+
+    if (createUserError || !userData || !userData.user) {
+      console.error('Failed to create auth user:', createUserError?.message);
+      return { 
+        success: false, 
+        message: createUserError?.message || 'Failed to create auth user' 
+      };
+    }
+
+    const userId = userData.user.id;
+    console.log("Auth user created successfully with ID:", userId);
+
+    // Step 2: Create the customer record using the auth user ID
+    console.log("Step 2: Creating customer record with auth user ID");
+    const customer = {
+      id: userId, // Use auth user ID for customer ID
+      name: customerData.name,
+      email: customerData.email,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
-    })
-    .select()
-    .single()
+    };
 
-  if (customerError) {
-    console.error('Error creating customer:', customerError)
-    return { success: false, message: customerError.message }
-  }
+    const { error: insertError } = await adminSupabase.from('customers').insert(customer);
 
-  // If there are products to add, add them
-  if (productIds.length > 0) {
-    const result = await addProductsToCustomer(customer.id, productIds)
-    if (!result.success) {
-      return result
+    if (insertError) {
+      console.error('Error inserting customer record:', insertError);
+      
+      // Rollback: Delete the auth user if customer creation fails
+      console.log("Rolling back - deleting auth user due to customer creation failure");
+      await adminSupabase.auth.admin.deleteUser(userId);
+      
+      return { 
+        success: false, 
+        message: insertError.message || 'Failed to insert customer record' 
+      };
     }
-  }
 
-  return { success: true, customer }
+    // Step 3: Create a profile to link the auth user to the customer
+    console.log("Step 3: Creating profile to link auth user and customer");
+    const profileData = {
+      id: userId, // Use auth user ID as profile ID
+      customer_id: userId, // Link to customer
+      email: customerData.email,
+      created_at: new Date().toISOString()
+    };
+
+    const { error: profileError } = await adminSupabase.from('profiles').insert(profileData);
+    
+    if (profileError) {
+      console.error('Error creating profile:', profileError);
+      
+      // Rollback: Delete customer and auth user
+      console.log("Rolling back - deleting customer and auth user due to profile creation failure");
+      await adminSupabase.from('customers').delete().eq('id', userId);
+      await adminSupabase.auth.admin.deleteUser(userId);
+      
+      return { 
+        success: false, 
+        message: profileError.message || 'Failed to create profile' 
+      };
+    }
+
+    // Step 4: Assign products if provided
+    if (productIds.length > 0) {
+      console.log("Step 4: Assigning products to customer");
+      
+      // First try direct insert approach
+      try {
+        const customerProductRecords = productIds.map(productId => ({
+          customer_id: userId,
+          product_id: productId,
+          created_at: new Date().toISOString()
+        }));
+        
+        const { error: bulkInsertError } = await adminSupabase
+          .from('customer_products')
+          .insert(customerProductRecords);
+          
+        if (bulkInsertError) {
+          console.error("Error with direct insertion of products:", bulkInsertError);
+          
+          // Try with RPC function as fallback
+          const { error: rpcError } = await adminSupabase.rpc('admin_assign_products', {
+            customer_id_param: userId,
+            product_ids_param: productIds
+          });
+          
+          if (rpcError) {
+            console.error("RPC fallback also failed:", rpcError);
+            // Note: Not rolling back the whole operation, as products can be added later
+          }
+        }
+      } catch (productError) {
+        console.error("Exception during product assignment:", productError);
+        // Continue - product assignment is not critical
+      }
+    }
+
+    return { 
+      success: true, 
+      user: {
+        id: userId,
+        email: customerData.email,
+        password: tempPassword,
+        emailConfirmed: true
+      },
+      customer,
+      customerId: userId,
+      message: "Customer and auth user created successfully"
+    };
+  } catch (error) {
+    console.error('Unexpected error in createCustomerWithProducts:', error);
+    return { success: false, message: error instanceof Error ? error.message : 'Unknown error occurred' };
+  }
 }
 
 // Helper function to create an order

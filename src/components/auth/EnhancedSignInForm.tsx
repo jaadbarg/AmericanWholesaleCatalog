@@ -71,10 +71,33 @@ export function EnhancedSignInForm() {
     setLoading(true)
 
     try {
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
+      // Enhanced debugging
+      console.log("Attempting login with:", { 
+        email, 
+        passwordLength: password.length,
+        passwordFirstChar: password.charAt(0),
+        passwordLastChar: password.charAt(password.length - 1)
+      });
+      
+      // Force email to lowercase for consistency
+      const normalizedEmail = email.toLowerCase().trim();
+      
+      // First, show a message about the current login attempt
+      console.log(`DEBUG LOGIN ATTEMPT - Email: ${normalizedEmail}, Password: ${password}`);
+      
+      // Try to actually authenticate
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: normalizedEmail,
         password
       })
+      
+      console.log("Login response:", { 
+        success: !error, 
+        user: data?.user ? data.user.id : null,
+        errorMessage: error?.message,
+        errorDetails: error,
+        userData: data?.user
+      });
 
       if (error) {
         throw error
@@ -90,10 +113,16 @@ export function EnhancedSignInForm() {
     } catch (e) {
       console.error('Sign in error:', e)
       
-      // Handle specific error cases with user-friendly messages
+      // Enhanced error handling
       if (e instanceof Error) {
+        console.log("Detailed error info:", {
+          message: e.message,
+          name: e.name,
+          stack: e.stack
+        });
+        
         if (e.message.includes('Invalid login credentials')) {
-          setError('The email or password you entered is incorrect')
+          setError('The email or password you entered is incorrect. If you just created this account, make sure to use exactly "Welcome123!" as the password.')
         } else if (e.message.includes('Email not confirmed')) {
           setError('Please verify your email address before signing in')
         } else {
