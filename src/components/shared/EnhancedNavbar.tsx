@@ -140,37 +140,34 @@ export function EnhancedNavbar() {
         initial={{ y: -100 }}
         animate={{ y: 0 }}
         className={`fixed top-0 left-0 right-0 z-30 transition-all duration-300 ${
-          scrolled ? "bg-white shadow-md" : "bg-white/90 backdrop-blur-md"
+          scrolled ? "bg-american-navy-800 shadow-md" : "bg-american-navy-900/95 backdrop-blur-md"
         }`}
       >
         <div className="container mx-auto px-4">
-          <div className="flex items-center justify-between h-14">
+          <div className="flex items-center justify-between h-16 flex-nowrap">
             {/* Logo */}
             <Link 
               href={isAdminUser ? "/admin/orders" : "/products"} 
-              className="flex items-center space-x-2 font-bold text-xl text-blue-900"
+              className="flex items-center space-x-2 font-bold text-xl text-white flex-shrink-0 mr-6 min-w-[180px]"
             >
-              <div className="relative h-7 w-7">
-                <Image 
-                  src="/favicon.png" 
-                  alt="American Wholesalers Logo" 
-                  fill
-                  className="rounded-full object-contain"
-                />
-              </div>
-              <span className="hidden sm:inline">American Wholesalers</span>
+              {/* Logo - using external image directly */}
+              <img 
+                src="https://lirp.cdn-website.com/7b78f399/dms3rep/multi/opt/logo-4403aa5f-204w.png" 
+                alt="American Wholesalers Logo" 
+                className="h-14 w-auto bg-white p-1 rounded-md max-w-[300px] object-contain"
+              />
             </Link>
             
             {/* Desktop navigation */}
-            <div className="hidden md:flex items-center space-x-1">
+            <div className="hidden md:flex items-center space-x-1 flex-shrink overflow-x-hidden">
               {navLinks.map((link) => (
                 <Link 
                   key={link.href}
                   href={link.href}
                   className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
                     link.active 
-                      ? 'bg-blue-100 text-blue-900' 
-                      : 'text-gray-700 hover:bg-gray-100'
+                      ? 'bg-white text-american-navy-800' 
+                      : 'text-white hover:bg-american-navy-700'
                   }`}
                 >
                   {link.label}
@@ -179,18 +176,18 @@ export function EnhancedNavbar() {
             </div>
 
             {/* Desktop right section */}
-            <div className="hidden md:flex items-center space-x-2">
+            <div className="hidden md:flex items-center space-x-2 flex-shrink-0">
               {!isAdminUser && (
                 <Link href="/cart">
                   <motion.div
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
-                    className="relative p-2 text-gray-700 hover:bg-gray-100 rounded-full"
+                    className="relative p-2 text-white hover:bg-american-navy-700 rounded-full"
                   >
                     <ShoppingCart className="h-5 w-5" />
                     {itemCount > 0 && (
                       <Badge
-                        variant="primary"
+                        variant="american"
                         className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center rounded-full p-0"
                       >
                         {itemCount}
@@ -205,7 +202,7 @@ export function EnhancedNavbar() {
                 <motion.button
                   whileHover={{ scale: 1.05 }}
                   onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
-                  className="flex items-center space-x-2 bg-gray-100 hover:bg-gray-200 rounded-full py-1.5 px-3 text-sm font-medium text-gray-700"
+                  className="flex items-center space-x-2 bg-american-navy-700 hover:bg-american-navy-600 rounded-full py-1.5 px-3 text-sm font-medium text-white"
                 >
                   <User size={18} />
                   <span className="hidden sm:inline max-w-[100px] truncate">
@@ -242,9 +239,9 @@ export function EnhancedNavbar() {
                         </Link>
                         <button
                           onClick={handleSignOut}
-                          className="flex w-full items-center px-4 py-2 text-sm text-red-600 hover:bg-red-50 rounded-md"
+                          className="flex w-full items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md"
                         >
-                          <LogOut size={16} className="mr-2" />
+                          <LogOut size={16} className="mr-2 text-american-navy-600" />
                           Sign Out
                         </button>
                       </div>
@@ -255,18 +252,18 @@ export function EnhancedNavbar() {
             </div>
 
             {/* Mobile menu button */}
-            <div className="flex md:hidden items-center space-x-1">
+            <div className="flex md:hidden items-center space-x-1 flex-shrink-0 ml-2">
               {!isAdminUser && (
                 <Link href="/cart">
                   <motion.div
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
-                    className="relative p-2 text-gray-700 hover:bg-gray-100 rounded-full"
+                    className="relative p-2 text-white hover:bg-american-navy-700 rounded-full"
                   >
                     <ShoppingCart className="h-5 w-5" />
                     {itemCount > 0 && (
                       <Badge
-                        variant="primary"
+                        variant="american"
                         className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center rounded-full p-0"
                       >
                         {itemCount}
@@ -280,7 +277,7 @@ export function EnhancedNavbar() {
                 onClick={() => setIsMenuOpen(!isMenuOpen)}
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
-                className="p-2 rounded-md text-gray-700 hover:bg-gray-100"
+                className="p-2 rounded-md text-white hover:bg-american-navy-700"
                 aria-label="Menu"
               >
                 {isMenuOpen ? <X size={20} /> : <Menu size={20} />}
@@ -298,7 +295,7 @@ export function EnhancedNavbar() {
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
             transition={{ duration: 0.2 }}
-            className="fixed inset-x-0 top-14 bg-white z-20 border-b shadow-lg md:hidden"
+            className="fixed inset-x-0 top-16 bg-american-navy-800 z-20 border-b border-american-navy-600 shadow-lg md:hidden"
           >
             <div className="container mx-auto px-4 py-3">
               <div className="space-y-1 pb-3">
@@ -308,8 +305,8 @@ export function EnhancedNavbar() {
                     href={link.href}
                     className={`flex items-center px-3 py-2 rounded-md text-base font-medium ${
                       link.active 
-                        ? 'bg-blue-100 text-blue-900' 
-                        : 'text-gray-700 hover:bg-gray-100'
+                        ? 'bg-white text-american-navy-800' 
+                        : 'text-white hover:bg-american-navy-700'
                     }`}
                     onClick={() => setIsMenuOpen(false)}
                   >
@@ -322,8 +319,8 @@ export function EnhancedNavbar() {
                   href="/profile" 
                   className={`flex items-center px-3 py-2 rounded-md text-base font-medium ${
                     pathname === '/profile' 
-                      ? 'bg-blue-100 text-blue-900' 
-                      : 'text-gray-700 hover:bg-gray-100'
+                      ? 'bg-white text-american-navy-800' 
+                      : 'text-white hover:bg-american-navy-700'
                   }`}
                   onClick={() => setIsMenuOpen(false)}
                 >

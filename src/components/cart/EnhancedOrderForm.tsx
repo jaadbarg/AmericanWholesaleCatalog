@@ -13,6 +13,19 @@ import { TextArea } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { sendOrderConfirmationEmail, sendNewOrderNotificationToAdmin } from '@/lib/utils/emailUtils'
 
+// Helper function to format date without timezone issues
+function formatDateWithoutTimezoneIssue(dateString: string) {
+  // Split the date string into components
+  const [year, month, day] = dateString.split('-').map(Number);
+  
+  // Format using en-US locale with components (avoids timezone shift)
+  return new Intl.DateTimeFormat('en-US', {
+    weekday: 'short',
+    month: 'short',
+    day: 'numeric'
+  }).format(new Date(year, month - 1, day)); // month is 0-indexed in JavaScript Dates
+}
+
 export function EnhancedOrderForm() {
     const router = useRouter()
     const supabase = createClientComponentClient()
@@ -219,7 +232,7 @@ export function EnhancedOrderForm() {
             description: item.description,
             quantity: item.quantity
           })),
-          deliveryDate: new Date(deliveryDate).toLocaleDateString(),
+          deliveryDate: formatDateWithoutTimezoneIssue(deliveryDate),
           notes: notes || undefined
         }
 
@@ -271,12 +284,28 @@ export function EnhancedOrderForm() {
   
     return (
         <div className="space-y-6">
-          <div className={`p-4 rounded-lg border ${orderWindow.canScheduleNextDay ? 'bg-green-50 border-green-100' : 'bg-amber-50 border-amber-100'}`}>
-            <div className="flex items-center">
-              <Clock className={`h-5 w-5 mr-2 flex-shrink-0 ${orderWindow.canScheduleNextDay ? 'text-green-500' : 'text-amber-500'}`} />
-              <p className={`text-sm ${orderWindow.canScheduleNextDay ? 'text-green-700' : 'text-amber-700'}`}>
-                {orderWindow.message}
-              </p>
+          {/* Order timing information - more visually prominent and explanatory */}
+          <div className={`p-4 rounded-lg border-2 ${
+            orderWindow.canScheduleNextDay 
+              ? 'bg-green-50 border-green-200' 
+              : 'bg-amber-50 border-amber-200'
+          }`}>
+            <div className="flex items-start">
+              <Clock className={`h-6 w-6 mr-3 flex-shrink-0 mt-0.5 ${
+                orderWindow.canScheduleNextDay ? 'text-green-600' : 'text-amber-600'
+              }`} />
+              <div>
+                <h3 className={`font-medium ${
+                  orderWindow.canScheduleNextDay ? 'text-green-800' : 'text-amber-800'
+                }`}>
+                  Order Timing
+                </h3>
+                <p className={`text-sm mt-1 ${
+                  orderWindow.canScheduleNextDay ? 'text-green-700' : 'text-amber-700'
+                }`}>
+                  {orderWindow.message}
+                </p>
+              </div>
             </div>
           </div>
     
@@ -285,20 +314,21 @@ export function EnhancedOrderForm() {
               <motion.div 
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="bg-red-50 border border-red-200 text-red-700 p-4 rounded-lg text-sm flex items-start"
+                className="bg-red-50 border-2 border-red-200 text-red-700 p-4 rounded-lg text-sm flex items-start"
               >
                 <AlertCircle className="h-5 w-5 mr-2 flex-shrink-0" />
                 <span>{error}</span>
               </motion.div>
             )}
     
-            <div>
+            {/* Clearer delivery date selection */}
+            <div className="bg-white border-2 border-gray-200 rounded-lg p-4">
               <label 
                 htmlFor="delivery-date" 
-                className="flex items-center text-sm font-medium text-gray-700 mb-1"
+                className="flex items-center font-medium text-gray-800 mb-2"
               >
-                <Calendar className="h-4 w-4 mr-1 text-gray-400" />
-                Delivery Date
+                <Calendar className="h-5 w-5 mr-2 text-blue-600" />
+                Select Delivery Date:
               </label>
               
               <select
@@ -306,67 +336,113 @@ export function EnhancedOrderForm() {
                 required
                 value={deliveryDate}
                 onChange={(e) => setDeliveryDate(e.target.value)}
-                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                className="block w-full rounded-md border-2 border-gray-300 px-4 py-3 text-base shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                aria-label="Select delivery date"
               >
                 {validDeliveryDates.length > 0 ? (
                   validDeliveryDates.map((date) => {
                     const dateStr = date.toISOString().split('T')[0];
-                    const displayDate = date.toLocaleDateString('en-US', { 
-                      weekday: 'short', 
-                      month: 'short', 
+                    
+                    // Format the date for display without timezone issues
+                    const displayDate = new Intl.DateTimeFormat('en-US', { 
+                      weekday: 'long', 
+                      month: 'long', 
                       day: 'numeric' 
-                    });
+                    }).format(date);
+                    
+                    // Highlight next business day
+                    const isNextBusinessDay = date.getTime() === getNextBusinessDay().getTime();
+                    
+                    // Check if it's tomorrow by comparing date components instead of timestamps
+                    const today = new Date();
+                    const tomorrow = new Date(today);
+                    tomorrow.setDate(today.getDate() + 1);
+                    
+                    const isTomorrow = 
+                      date.getDate() === tomorrow.getDate() && 
+                      date.getMonth() === tomorrow.getMonth() && 
+                      date.getFullYear() === tomorrow.getFullYear();
                     
                     return (
                       <option key={dateStr} value={dateStr}>
-                        {displayDate}
+                        {displayDate} {isNextBusinessDay && orderWindow.canScheduleNextDay ? ' (Next Business Day)' : ''}
+                        {isTomorrow && orderWindow.canScheduleNextDay ? ' (Tomorrow)' : ''}
                       </option>
                     );
                   })
                 ) : (
-                  <option value="">Loading delivery dates...</option>
+                  <option value="">Loading available delivery dates...</option>
                 )}
               </select>
               
-              <p className="mt-1 text-xs text-gray-500">
-                Only business days are available for delivery (excludes weekends and holidays)
-              </p>
+              <div className="mt-2 flex items-start">
+                <div className="bg-blue-50 rounded-full p-1 mr-2 flex-shrink-0">
+                  <Calendar className="h-4 w-4 text-blue-600" />
+                </div>
+                <p className="text-sm text-gray-600">
+                  Deliveries are only available on business days (Monday-Friday, excluding holidays)
+                </p>
+              </div>
             </div>
     
-            <div>
+            {/* Order notes - clearer instructions */}
+            <div className="bg-white border-2 border-gray-200 rounded-lg p-4">
               <label 
                 htmlFor="notes" 
-                className="flex items-center text-sm font-medium text-gray-700 mb-1"
+                className="flex items-center font-medium text-gray-800 mb-2"
               >
-                <FileText className="h-4 w-4 mr-1 text-gray-400" />
-                Order Notes (Optional)
+                <FileText className="h-5 w-5 mr-2 text-blue-600" />
+                Order Notes (Optional):
               </label>
               <TextArea
                 id="notes"
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
                 rows={3}
-                placeholder="Any special instructions for your order?"
+                placeholder="Add any special delivery instructions or notes about your order here..."
+                className="text-base border-2"
               />
+              <p className="mt-2 text-sm text-gray-500">
+                Examples: delivery location details, special handling instructions, etc.
+              </p>
             </div>
     
-            <div className="pt-4 border-t">
-              <div className="flex justify-between items-center mb-4">
-                <span className="text-sm font-medium text-gray-600">Total Items:</span>
-                <Badge variant="primary" size="md">
-                  {items.reduce((acc, item) => acc + item.quantity, 0)} items
-                </Badge>
+            {/* Order summary and submit button */}
+            <div className="bg-american-red-50 border-2 border-american-red-100 rounded-lg p-5">
+              <h3 className="font-medium text-american-red-800 mb-3">Order Summary</h3>
+              
+              <div className="bg-white border border-american-red-100 rounded-lg p-3 mb-4">
+                <div className="flex justify-between items-center mb-2">
+                  <span className="text-gray-700">Total Items:</span>
+                  <Badge variant="american" size="lg" className="text-base px-3 py-1">
+                    {items.reduce((acc, item) => acc + item.quantity, 0)} units
+                  </Badge>
+                </div>
+                
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-700">Delivery Date:</span>
+                  <span className="font-medium text-gray-800">
+                    {deliveryDate ? formatDateWithoutTimezoneIssue(deliveryDate) : 'Select a date'}
+                  </span>
+                </div>
               </div>
               
               <Button
                 type="submit"
                 disabled={loading || items.length === 0 || isSubmitting}
                 fullWidth
+                size="lg"
+                variant="american"
                 icon={isSubmitting ? <Clock className="animate-spin" /> : <Check />}
                 isLoading={isSubmitting}
+                className="py-4 text-lg font-bold"
               >
-                {isSubmitting ? 'Processing...' : 'Place Order'}
+                {isSubmitting ? 'Processing...' : 'Place Your Order'}
               </Button>
+              
+              <p className="text-center text-sm text-american-red-700 mt-3">
+                By placing your order, you agree to our standard delivery terms
+              </p>
             </div>
           </form>
         </div>

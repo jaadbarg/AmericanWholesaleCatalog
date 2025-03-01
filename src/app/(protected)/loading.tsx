@@ -20,52 +20,91 @@ export default function ProtectedLoading() {
   }, [])
 
   return (
-    <div className="min-h-screen flex flex-col justify-center items-center bg-gray-50 relative overflow-hidden">
-      {/* Background warehouse elements */}
-      <div className="absolute inset-0 opacity-5 pointer-events-none overflow-hidden">
-        <div className="absolute top-5 left-5 w-40 h-40 border-8 border-dashed border-gray-300 rounded-lg"></div>
-        <div className="absolute bottom-10 right-10 w-60 h-60 border-8 border-dashed border-gray-300 rounded-lg"></div>
-        <div className="absolute top-1/4 right-1/4 w-20 h-20 border-4 border-dashed border-gray-300 rounded-lg"></div>
+    <div className="min-h-screen flex flex-col justify-center items-center bg-blue-50 relative overflow-hidden">
+      {/* Enhanced warehouse background */}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden">
+        {/* Warehouse floor */}
+        <div className="absolute bottom-0 left-0 right-0 h-40 bg-gradient-to-t from-gray-200 to-gray-100"></div>
         
-        {/* Shelves */}
-        <div className="absolute top-20 left-1/4 w-40 h-4 bg-gray-300"></div>
-        <div className="absolute top-40 left-1/4 w-40 h-4 bg-gray-300"></div>
-        <div className="absolute top-60 left-1/4 w-40 h-4 bg-gray-300"></div>
+        {/* Floor grid lines */}
+        <div className="absolute bottom-0 left-0 right-0 h-40" style={{ 
+          backgroundImage: 'linear-gradient(90deg, transparent 98%, rgba(156, 163, 175, 0.3) 2%),linear-gradient(0deg, transparent 98%, rgba(156, 163, 175, 0.3) 2%)',
+          backgroundSize: '40px 40px'
+        }}></div>
         
-        <div className="absolute top-20 right-1/4 w-40 h-4 bg-gray-300"></div>
-        <div className="absolute top-40 right-1/4 w-40 h-4 bg-gray-300"></div>
-        <div className="absolute top-60 right-1/4 w-40 h-4 bg-gray-300"></div>
+        {/* Left warehouse shelves */}
+        <div className="absolute left-10 top-1/2 transform -translate-y-1/2 w-20 h-80 bg-gradient-to-r from-blue-100 to-blue-50 border-r-4 border-blue-200 overflow-hidden">
+          {/* Shelf levels */}
+          {[...Array(5)].map((_, i) => (
+            <div key={`left-shelf-${i}`} className="absolute w-full h-[15%] border-b-2 border-blue-200" style={{ top: `${i * 20}%` }}>
+              {/* Random boxes on each shelf */}
+              <div className="absolute right-1 top-1 w-8 h-6 bg-amber-200 border border-amber-300"></div>
+              <div className="absolute right-10 top-2 w-6 h-5 bg-green-200 border border-green-300"></div>
+              <div className="absolute right-5 top-1 w-4 h-7 bg-red-200 border border-red-300"></div>
+            </div>
+          ))}
+        </div>
         
-        {/* Shelf supports */}
-        <div className="absolute top-20 left-1/4 w-2 h-60 bg-gray-300"></div>
-        <div className="absolute top-20 left-1/4 ml-38 w-2 h-60 bg-gray-300"></div>
+        {/* Right warehouse shelves */}
+        <div className="absolute right-10 top-1/2 transform -translate-y-1/2 w-20 h-80 bg-gradient-to-l from-blue-100 to-blue-50 border-l-4 border-blue-200 overflow-hidden">
+          {/* Shelf levels */}
+          {[...Array(5)].map((_, i) => (
+            <div key={`right-shelf-${i}`} className="absolute w-full h-[15%] border-b-2 border-blue-200" style={{ top: `${i * 20}%` }}>
+              {/* Random boxes on each shelf */}
+              <div className="absolute left-1 top-1 w-8 h-6 bg-purple-200 border border-purple-300"></div>
+              <div className="absolute left-10 top-2 w-6 h-5 bg-yellow-200 border border-yellow-300"></div>
+              <div className="absolute left-5 top-1 w-4 h-7 bg-blue-200 border border-blue-300"></div>
+            </div>
+          ))}
+        </div>
         
-        <div className="absolute top-20 right-1/4 w-2 h-60 bg-gray-300"></div>
-        <div className="absolute top-20 right-1/4 mr-38 w-2 h-60 bg-gray-300"></div>
-        
-        {/* Boxes */}
-        <div className="absolute top-24 left-1/4 ml-5 w-10 h-10 bg-gray-300 rounded"></div>
-        <div className="absolute top-24 left-1/4 ml-20 w-12 h-12 bg-gray-300 rounded"></div>
-        <div className="absolute top-44 left-1/4 ml-8 w-14 h-12 bg-gray-300 rounded"></div>
-        <div className="absolute top-44 left-1/4 ml-25 w-8 h-12 bg-gray-300 rounded"></div>
-        
-        <div className="absolute top-24 right-1/4 mr-5 w-10 h-10 bg-gray-300 rounded"></div>
-        <div className="absolute top-24 right-1/4 mr-20 w-12 h-12 bg-gray-300 rounded"></div>
-        <div className="absolute top-44 right-1/4 mr-8 w-14 h-12 bg-gray-300 rounded"></div>
-        <div className="absolute top-44 right-1/4 mr-25 w-8 h-12 bg-gray-300 rounded"></div>
+        {/* Back wall with shelves */}
+        <div className="absolute top-0 left-0 right-0 h-1/2 bg-gradient-to-b from-blue-100 to-transparent overflow-hidden">
+          {/* Large warehouse shelves */}
+          <div className="grid grid-cols-3 gap-2 mx-auto max-w-3xl pt-4">
+            {[...Array(3)].map((_, i) => (
+              <div key={`back-shelf-${i}`} className="h-24 bg-gradient-to-b from-gray-200 to-gray-100 border-2 border-gray-300 rounded-sm p-1">
+                {/* Shelves with products */}
+                <div className="h-1/3 border-b border-gray-300 flex items-end justify-around">
+                  <div className="w-2/5 h-4/5 bg-amber-300 border border-amber-400"></div>
+                  <div className="w-2/5 h-3/5 bg-sky-300 border border-sky-400"></div>
+                </div>
+                <div className="h-1/3 border-b border-gray-300 flex items-end justify-around">
+                  <div className="w-2/5 h-3/5 bg-red-300 border border-red-400"></div>
+                  <div className="w-2/5 h-4/5 bg-green-300 border border-green-400"></div>
+                </div>
+                <div className="h-1/3 flex items-end justify-around">
+                  <div className="w-2/5 h-4/5 bg-purple-300 border border-purple-400"></div>
+                  <div className="w-2/5 h-3/5 bg-orange-300 border border-orange-400"></div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
       
-      {/* Animated forklift that moves back and forth */}
-      <div className="absolute animate-forklift-move left-0 bottom-10">
-        <div className="relative w-24 h-20">
-          <div className="absolute bottom-0 left-0 w-20 h-8 bg-amber-500 rounded-sm"></div>
-          <div className="absolute bottom-8 left-4 w-12 h-10 bg-amber-600 rounded-t-md"></div>
-          <div className="absolute bottom-0 left-0 w-5 h-5 bg-gray-800 rounded-full"></div>
-          <div className="absolute bottom-0 left-14 w-5 h-5 bg-gray-800 rounded-full"></div>
-          <div className="absolute bottom-5 left-1 w-18 h-1 bg-gray-700"></div>
-          <div className="absolute bottom-4 left-0 w-2 h-12 bg-gray-700"></div>
-          <div className="absolute bottom-10 left-1 w-10 h-1 bg-gray-700"></div>
-          <div className="absolute bottom-16 left-1 w-10 h-1 bg-gray-700"></div>
+      {/* Animated forklift that moves back and forth - moved higher up */}
+      <div className="absolute animate-forklift-move left-0 bottom-1/3 z-10">
+        <div className="relative w-32 h-28">
+          {/* Enhanced forklift design */}
+          <div className="absolute bottom-0 left-0 w-24 h-10 bg-amber-500 rounded-md"></div>
+          <div className="absolute bottom-9 left-6 w-14 h-12 bg-amber-600 rounded-t-md"></div>
+          {/* Driver */}
+          <div className="absolute bottom-12 left-8 w-8 h-8 bg-blue-500 rounded-t-full"></div>
+          <div className="absolute bottom-16 left-10 w-4 h-4 bg-amber-100 rounded-full"></div>
+          {/* Wheels */}
+          <div className="absolute bottom-0 left-2 w-6 h-6 bg-gray-800 rounded-full"></div>
+          <div className="absolute bottom-0 left-16 w-6 h-6 bg-gray-800 rounded-full"></div>
+          {/* Lift mechanism */}
+          <div className="absolute bottom-3 left-0 w-2 h-16 bg-gray-700"></div>
+          <div className="absolute bottom-3 left-28 w-2 h-16 bg-gray-700"></div>
+          {/* Forks */}
+          <div className="absolute bottom-6 left-0 w-30 h-2 bg-gray-700"></div>
+          <div className="absolute bottom-12 left-0 w-30 h-2 bg-gray-700"></div>
+          {/* Box being carried */}
+          <div className="absolute bottom-10 left-4 w-16 h-12 bg-brown-400 border-2 border-brown-500 flex items-center justify-center">
+            <div className="text-xs text-white font-bold">BOX</div>
+          </div>
         </div>
       </div>
 

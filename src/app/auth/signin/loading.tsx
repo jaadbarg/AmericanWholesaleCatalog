@@ -22,7 +22,7 @@ export default function SignInLoading() {
   return (
     <div className="min-h-screen flex flex-col md:flex-row">
       {/* Left Side - Brand with warehouse theme background */}
-      <div className="hidden md:flex md:w-1/2 bg-blue-900 text-white flex-col justify-center items-center p-8 relative overflow-hidden">
+      <div className="hidden md:flex md:w-1/2 bg-gray-800 text-white flex-col justify-center items-center p-8 relative overflow-hidden">
         {/* Warehouse elements in the background */}
         <div className="absolute inset-0 opacity-10 pointer-events-none overflow-hidden">
           {/* Warehouse shelves */}
@@ -67,7 +67,7 @@ export default function SignInLoading() {
             className="mx-auto mb-8 animate-pulse"
           />
           <h1 className="text-4xl font-bold mb-6">American Wholesalers</h1>
-          <p className="text-xl mb-8 text-blue-100">
+          <p className="text-xl mb-8 text-gray-300">
             Premium wholesale supplies for Upstate NY's finest establishments
           </p>
         </div>
@@ -84,7 +84,7 @@ export default function SignInLoading() {
               height={80} 
               className="mx-auto mb-4 animate-pulse"
             />
-            <h1 className="text-2xl font-bold text-blue-900">American Wholesalers</h1>
+            <h1 className="text-2xl font-bold text-gray-800">American Wholesalers</h1>
           </div>
           
           <div className="bg-white rounded-xl shadow-lg p-8">
@@ -106,14 +106,14 @@ export default function SignInLoading() {
                 </div>
                 
                 <div className="pt-2">
-                  <div className="h-11 bg-blue-100 rounded"></div>
+                  <div className="h-11 bg-gray-200 rounded"></div>
                 </div>
               </div>
               
               {/* Loading indicator */}
               <div className="flex justify-center items-center pt-4">
-                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
-                <span className="ml-3 text-sm text-blue-600">Preparing login form...</span>
+                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-gray-600"></div>
+                <span className="ml-3 text-sm text-gray-600">Preparing login form...</span>
               </div>
             </div>
           </div>

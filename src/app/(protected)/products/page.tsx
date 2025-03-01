@@ -16,14 +16,14 @@ export default async function Products() {
   if (isAdmin(session.user.email)) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] text-center px-4">
-        <h1 className="text-3xl font-bold text-blue-900 mb-4">
+        <h1 className="text-3xl font-bold text-american-navy-800 mb-4">
           Welcome, Admin Team!
         </h1>
         <p className="text-gray-600 max-w-md mb-8">
           Please use the Admin Panel in the navigation bar to view and manage pending orders.
         </p>
-        <div className="p-6 bg-blue-50 rounded-lg border border-blue-100">
-          <p className="text-sm text-blue-800">
+        <div className="p-6 bg-american-navy-50 rounded-lg border border-american-navy-100">
+          <p className="text-sm text-american-navy-800">
             ⚡ Quick Tip: All new orders will appear in your admin panel for review and confirmation.
           </p>
         </div>

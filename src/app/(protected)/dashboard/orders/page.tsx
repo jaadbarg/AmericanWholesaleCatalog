@@ -2,7 +2,7 @@
 import { createServerComponentClient } from '@supabase/auth-helpers-nextjs'
 import { cookies } from 'next/headers'
 import { EnhancedOrderDetails } from '@/components/orders/EnhancedOrderDetails'
-import { PackageOpen } from 'lucide-react'
+import { PackageOpen, ShoppingCart } from 'lucide-react'
 
 export default async function OrdersPage() {
   const supabase = createServerComponentClient({ cookies })
@@ -63,10 +63,34 @@ export default async function OrdersPage() {
   }
 
   return (
-    <div>
-      <div className="flex items-center gap-3 mb-8">
-        <PackageOpen className="h-7 w-7 text-blue-900" />
-        <h1 className="text-3xl font-bold text-blue-900">Order History</h1>
+    <div className="max-w-6xl mx-auto">
+      {/* Header with enhanced styling */}
+      <div className="bg-american-navy-50 p-6 rounded-xl border border-american-navy-200 mb-8">
+        <div className="flex items-center gap-3">
+          <div className="bg-american-navy-100 p-3 rounded-full">
+            <PackageOpen className="h-8 w-8 text-american-navy-700" />
+          </div>
+          <div>
+            <h1 className="text-3xl font-bold text-american-navy-800">Your Order History</h1>
+            <p className="text-gray-600 mt-1">
+              View, print, and reorder from your past orders
+            </p>
+          </div>
+        </div>
+      </div>
+      
+      {/* Simple explanation text for non-technical users */}
+      <div className="bg-white p-4 rounded-lg border border-american-navy-100 mb-6 flex items-start">
+        <div className="mr-3 text-american-navy-600 flex-shrink-0 mt-1">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="16" x2="12" y2="12"></line>
+            <line x1="12" y1="8" x2="12.01" y2="8"></line>
+          </svg>
+        </div>
+        <p className="text-gray-700">
+          <span className="font-bold">Click on any order</span> to view its details, print the order, or place the same order again. Need help? Call us at <span className="text-american-navy-700 font-bold">(555) 123-4567</span>
+        </p>
       </div>
       
       {orders && orders.length > 0 ? (
@@ -76,19 +100,20 @@ export default async function OrdersPage() {
           ))}
         </div>
       ) : (
-        <div className="flex flex-col items-center justify-center bg-gray-50 py-16 rounded-lg border border-gray-200">
-          <div className="text-gray-400 mb-4">
-            <PackageOpen size={48} />
+        <div className="flex flex-col items-center justify-center bg-white py-16 rounded-xl border-2 border-american-navy-100 shadow-sm">
+          <div className="text-american-navy-300 mb-4">
+            <PackageOpen size={64} />
           </div>
-          <h2 className="text-xl font-semibold text-gray-700 mb-2">No orders yet</h2>
-          <p className="text-gray-500 max-w-md text-center mb-6">
-            Your order history will appear here once you place your first order.
+          <h2 className="text-2xl font-bold text-american-navy-800 mb-2">No Orders Yet</h2>
+          <p className="text-gray-600 max-w-md text-center mb-8 text-lg">
+            You haven't placed any orders yet. Browse our catalog to find products and place your first order.
           </p>
           <a 
             href="/products" 
-            className="px-4 py-2 bg-blue-900 text-white rounded-lg hover:bg-blue-800 transition-colors"
+            className="px-6 py-3 bg-american-navy-600 text-white rounded-lg hover:bg-american-navy-700 transition-colors text-lg font-medium flex items-center"
           >
-            Browse Products
+            <ShoppingCart className="mr-2 h-5 w-5" />
+            Browse Our Products
           </a>
         </div>
       )}

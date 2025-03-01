@@ -73,7 +73,7 @@ export default function EnhancedOrderBanner() {
     <AnimatePresence>
       <motion.div 
         className={`fixed top-0 left-0 right-0 z-50 ${
-          orderWindow.canScheduleNextDay ? 'bg-blue-900' : 'bg-amber-600'
+          orderWindow.canScheduleNextDay ? 'bg-american-red-700' : 'bg-amber-600'
         } text-white`}
         initial={{ y: -100 }}
         animate={{ y: 0 }}
@@ -91,7 +91,7 @@ export default function EnhancedOrderBanner() {
                       Orders placed before <span className="font-bold">3:00 PM</span> will be delivered next business day
                       {remainingTime && (
                         <Badge 
-                          variant="primary" 
+                          variant="american" 
                           className="ml-2 bg-white/20"
                           rounded
                         >

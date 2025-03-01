@@ -213,7 +213,7 @@ export function EnhancedSignInForm() {
         <div className="pt-2">
           <Button
             type="submit"
-            variant="primary"
+            className="bg-gray-700 hover:bg-gray-800 text-white"
             fullWidth
             isLoading={loading}
             disabled={loading}

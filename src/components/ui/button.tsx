@@ -3,7 +3,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { Loader2 } from 'lucide-react';
 
-type ButtonVariant = 'primary' | 'secondary' | 'outline' | 'ghost' | 'danger';
+type ButtonVariant = 'primary' | 'secondary' | 'outline' | 'ghost' | 'danger' | 'american';
 type ButtonSize = 'sm' | 'md' | 'lg';
 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
@@ -31,11 +31,12 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     
     // Variant-specific styles
     const variantStyles = {
-      primary: 'bg-blue-900 hover:bg-blue-800 text-white focus:ring-blue-500',
+      primary: 'bg-american-navy-700 hover:bg-american-navy-800 text-white focus:ring-american-navy-500',
       secondary: 'bg-gray-100 hover:bg-gray-200 text-gray-800 focus:ring-gray-400',
-      outline: 'border border-gray-300 hover:bg-gray-50 text-gray-700 focus:ring-blue-500',
+      outline: 'border border-gray-300 hover:bg-gray-50 text-gray-700 focus:ring-american-navy-500',
       ghost: 'hover:bg-gray-100 text-gray-700 focus:ring-gray-400',
       danger: 'bg-red-600 hover:bg-red-700 text-white focus:ring-red-500',
+      american: 'bg-american-red-600 hover:bg-american-red-700 text-white focus:ring-american-red-500',
     };
     
     // Size-specific styles

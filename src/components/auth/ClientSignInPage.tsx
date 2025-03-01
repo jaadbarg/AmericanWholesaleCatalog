@@ -30,7 +30,7 @@ function SignInContent() {
   return (
     <div className="min-h-screen flex flex-col md:flex-row">
       {/* Left Side - Brand with warehouse theme background */}
-      <div className="hidden md:flex md:w-1/2 bg-blue-900 text-white flex-col justify-center items-center p-8 relative overflow-hidden">
+      <div className="hidden md:flex md:w-1/2 bg-gray-800 text-white flex-col justify-center items-center p-8 relative overflow-hidden">
         {/* Warehouse elements in the background */}
         <div className="absolute inset-0 opacity-10 pointer-events-none overflow-hidden">
           {/* Warehouse shelves */}
@@ -53,15 +53,14 @@ function SignInContent() {
         </div>
         
         <div className="max-w-md mx-auto text-center relative z-10">
-          <Image 
-            src="/favicon.png" 
+          <img 
+            src="https://lirp.cdn-website.com/7b78f399/dms3rep/multi/opt/logo-4403aa5f-204w.png" 
             alt="American Wholesalers Logo" 
-            width={120} 
-            height={120} 
+            width={200}
             className="mx-auto mb-8"
           />
           <h1 className="text-4xl font-bold mb-6">American Wholesalers</h1>
-          <p className="text-xl mb-8 text-blue-100">
+          <p className="text-xl mb-8 text-gray-300">
             Premium wholesale supplies for Upstate NY's finest establishments
           </p>
         </div>
@@ -71,14 +70,13 @@ function SignInContent() {
       <div className="flex-1 flex items-center justify-center p-8">
         <div className="max-w-md w-full">
           <div className="md:hidden mb-8 text-center">
-            <Image 
-              src="/favicon.png" 
+            <img 
+              src="https://lirp.cdn-website.com/7b78f399/dms3rep/multi/opt/logo-4403aa5f-204w.png" 
               alt="American Wholesalers Logo" 
-              width={80} 
-              height={80} 
+              width={150}
               className="mx-auto mb-4"
             />
-            <h1 className="text-2xl font-bold text-blue-900">American Wholesalers</h1>
+            <h1 className="text-2xl font-bold text-gray-800">American Wholesalers</h1>
           </div>
           
           <div className="bg-white rounded-xl shadow-lg p-8">
@@ -90,7 +88,7 @@ function SignInContent() {
             <div className="mt-8 text-sm text-center text-gray-500">
               <p>
                 Need help? Contact{' '}
-                <a href="mailto:support@americanwholesalers.com" className="text-blue-600 hover:text-blue-800">
+                <a href="mailto:support@americanwholesalers.com" className="text-gray-600 hover:text-gray-800">
                   support@americanwholesalers.com
                 </a>
               </p>
