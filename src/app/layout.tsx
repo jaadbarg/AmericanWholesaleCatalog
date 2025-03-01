@@ -1,10 +1,14 @@
 // src/app/layout.tsx
 import type { Metadata } from "next"
-import { Inter } from "next/font/google"
+import { Red_Hat_Display } from "next/font/google"
 import "./globals.css"
 import { AppProvider } from "@/components/shared/AppProvider"
 
-const inter = Inter({ subsets: ["latin"] })
+const redHat = Red_Hat_Display({ 
+  subsets: ["latin"],
+  weight: ["400", "500", "700"],
+  variable: "--font-red-hat"
+})
 
 export const metadata: Metadata = {
   title: "American Wholesalers Catalog | Premium Restaurant Supplies",
@@ -22,8 +26,8 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en">
-      <body className={inter.className}>
+    <html lang="en" className={redHat.variable}>
+      <body className={redHat.className}>
         <AppProvider>{children}</AppProvider>
       </body>
     </html>

@@ -8,6 +8,9 @@ const config: Config = {
   ],
   theme: {
     extend: {
+      fontFamily: {
+        sans: ['var(--font-red-hat)'],
+      },
       container: {
         center: true,
         padding: "1rem",
