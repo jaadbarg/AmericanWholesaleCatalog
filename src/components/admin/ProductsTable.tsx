@@ -511,13 +511,13 @@ export default function ProductsTable({ initialProducts }: ProductsTableProps) {
               <tr>
                 <td colSpan={5} className="py-6 text-center text-gray-500">
                   {filteredProducts.length === 0 ? (
-                    searchTerm || categoryFilter !== 'all' ? (
+                    searchTerm ? (
                       <div className="flex flex-col items-center">
                         <p className="mb-2">No products match your search criteria</p>
                         <button
                           onClick={() => {
-                            setSearchTerm('')
-                            setCategoryFilter('all')
+                            setSearchTerm('');
+                            // Reset any other filters if they're added in the future
                           }}
                           className="text-blue-600 hover:text-blue-800 text-sm"
                         >
