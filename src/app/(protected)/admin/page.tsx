@@ -4,7 +4,7 @@ import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { isAdmin } from '@/lib/utils/adminUtils';
 import Link from 'next/link';
-import { BarChart3, PackageOpen, Users, Truck, Clock, Settings, UserPlus, Upload, FilePlus, Layers } from 'lucide-react';
+import { BarChart3, PackageOpen, Users, Truck, Clock, UserPlus, Upload, FilePlus, Layers } from 'lucide-react';
 
 export default async function AdminDashboardPage() {
   const supabase = createServerComponentClient({ cookies });
@@ -89,15 +89,8 @@ export default async function AdminDashboardPage() {
 
   return (
     <div className="py-8">
-      <div className="flex justify-between items-center mb-8">
+      <div className="mb-8">
         <h1 className="text-3xl font-bold">Admin Dashboard</h1>
-        <Link 
-          href="/admin/settings"
-          className="flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
-        >
-          <Settings className="h-4 w-4" />
-          <span>Settings</span>
-        </Link>
       </div>
 
       {/* Stats Overview */}

@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { createCustomerWithProducts, Product } from '@/lib/supabase/client'
+import { Product } from '@/lib/supabase/client'
 import { Upload, CheckCircle, XCircle, AlertTriangle, FileText, Info } from 'lucide-react'
 
 interface CustomerImportProps {
@@ -13,6 +13,7 @@ interface ImportRow {
   name: string
   email: string
   productIds: string[]
+  invalidProducts: string[]
   status: 'pending' | 'success' | 'error'
   message?: string
 }
@@ -29,14 +30,24 @@ export default function CustomerImport({ products }: CustomerImportProps) {
   const [importStats, setImportStats] = useState({
     total: 0,
     success: 0,
-    failed: 0
+    failed: 0,
+    skippedProducts: 0
   })
+  const [showProductsModal, setShowProductsModal] = useState<{rowIndex: number, products: Array<{id: string, item_number: string, description: string}>} | null>(null)
 
   // Product ID lookup by item number
   const productLookup = products.reduce((acc, product) => {
     acc[product.item_number] = product.id
     return acc
   }, {} as Record<string, string>)
+  
+  // Helper function to get product details by IDs
+  const getProductDetailsByIds = (productIds: string[]) => {
+    return productIds.map(id => {
+      const product = products.find(p => p.id === id)
+      return product || { id, item_number: "Unknown", description: "Product not found" }
+    })
+  }
 
   // Handle file upload
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -86,18 +97,31 @@ export default function CustomerImport({ products }: CustomerImportProps) {
       let productIds: string[] = []
       
       // Parse products if column exists
+      let invalidProducts: string[] = [];
       if (productIndex !== -1 && values[productIndex]) {
         const productItems = values[productIndex].split(';').map(p => p.trim())
         
-        productIds = productItems
-          .map(item => productLookup[item])
-          .filter(Boolean) as string[]
+        // Track both valid and invalid products
+        invalidProducts = [];
+        const validProductIds: string[] = [];
+        
+        productItems.forEach(item => {
+          const productId = productLookup[item];
+          if (productId) {
+            validProductIds.push(productId);
+          } else if (item) { // Only track non-empty strings
+            invalidProducts.push(item);
+          }
+        });
+        
+        productIds = validProductIds;
       }
       
       rows.push({
         name,
         email,
         productIds,
+        invalidProducts,
         status: 'pending'
       })
     }
@@ -120,12 +144,22 @@ export default function CustomerImport({ products }: CustomerImportProps) {
       const row = updatedRows[i]
       
       try {
-        const result = await createCustomerWithProducts(
-          { name: row.name, email: row.email },
-          row.productIds
-        )
+        // Call the API endpoint instead of direct function
+        const response = await fetch('/api/admin/import-customer', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${process.env.NEXT_PUBLIC_ADMIN_API_KEY || 'test-api-key'}`
+          },
+          body: JSON.stringify({
+            customerData: { name: row.name, email: row.email },
+            productIds: row.productIds
+          })
+        });
         
-        if (result.success) {
+        const result = await response.json();
+        
+        if (response.ok && result.success) {
           updatedRows[i] = {
             ...row,
             status: 'success',
@@ -136,7 +170,7 @@ export default function CustomerImport({ products }: CustomerImportProps) {
           updatedRows[i] = {
             ...row,
             status: 'error',
-            message: result.message || 'Unknown error'
+            message: result.message || 'Import failed'
           }
           failedCount++
         }
@@ -153,10 +187,15 @@ export default function CustomerImport({ products }: CustomerImportProps) {
       setImportRows([...updatedRows])
     }
     
+    // Calculate total skipped products
+    const skippedProductsCount = updatedRows.reduce((total, row) => 
+      total + row.invalidProducts.length, 0);
+    
     setImportStats({
       total: updatedRows.length,
       success: successCount,
-      failed: failedCount
+      failed: failedCount,
+      skippedProducts: skippedProductsCount
     })
     
     setImportComplete(true)
@@ -165,6 +204,63 @@ export default function CustomerImport({ products }: CustomerImportProps) {
 
   return (
     <div className="bg-white rounded-lg border shadow-sm">
+      {showProductsModal && (
+        <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
+          <div className="bg-white rounded-lg shadow-xl w-full max-w-3xl mx-4 max-h-[80vh] flex flex-col">
+            <div className="p-5 border-b flex justify-between items-center">
+              <h3 className="text-lg font-semibold text-gray-800">
+                Products for Customer: {importRows[showProductsModal.rowIndex]?.name}
+              </h3>
+              <button 
+                onClick={() => setShowProductsModal(null)}
+                className="text-gray-400 hover:text-gray-500 focus:outline-none"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <div className="p-1 overflow-y-auto">
+              <div className="p-0.5">
+                <table className="w-full border-collapse">
+                  <thead>
+                    <tr className="bg-gray-50">
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Item Number</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {showProductsModal.products.map((product, i) => (
+                      <tr key={i} className="hover:bg-gray-50">
+                        <td className="px-4 py-3 text-sm text-gray-900 font-medium">{product.item_number}</td>
+                        <td className="px-4 py-3 text-sm text-gray-500">{product.description}</td>
+                        <td className="px-4 py-3 text-sm text-gray-500">{(product as any).category || 'N/A'}</td>
+                      </tr>
+                    ))}
+                    {showProductsModal.products.length === 0 && (
+                      <tr>
+                        <td colSpan={3} className="px-4 py-8 text-center text-gray-500 text-sm">
+                          No products assigned to this customer.
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+            <div className="px-5 py-4 border-t text-right">
+              <button
+                onClick={() => setShowProductsModal(null)}
+                className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      
       <div className="p-6 border-b">
         <h2 className="text-xl font-semibold mb-2">Bulk Import Customers</h2>
         <p className="text-gray-500">
@@ -223,16 +319,22 @@ export default function CustomerImport({ products }: CustomerImportProps) {
                     <h5 className="font-medium text-gray-700 text-sm mb-2">Example CSV Contents:</h5>
                     <pre className="text-xs bg-white p-3 rounded border border-gray-200 overflow-x-auto whitespace-pre-wrap">
                       name,email,products<br/>
-                      John Smith,john@example.com,PRODUCT1;PRODUCT2;PRODUCT3<br/>
-                      Jane Doe,jane@example.com,PRODUCT4;PRODUCT5<br/>
+                      John Smith,john@example.com,{products.length > 0 ? products[0].item_number : "ABC123"};{products.length > 1 ? products[1].item_number : "DEF456"}<br/>
+                      Jane Doe,jane@example.com,{products.length > 2 ? products[2].item_number : "GHI789"}<br/>
                       Bob Johnson,bob@example.com,<br/>
-                      Sarah Wilson,sarah@example.com,PRODUCT1;PRODUCT6
+                      Sarah Wilson,sarah@example.com,{products.length > 0 ? products[0].item_number : "ABC123"}
                     </pre>
                   </div>
                   
                   <div>
                     <a 
-                      href="data:text/csv;charset=utf-8,name,email,products%0AJohn%20Smith,john@example.com,PRODUCT1;PRODUCT2;PRODUCT3%0AJane%20Doe,jane@example.com,PRODUCT4;PRODUCT5%0ABob%20Johnson,bob@example.com,%0ASarah%20Wilson,sarah@example.com,PRODUCT1;PRODUCT6" 
+                      href={`data:text/csv;charset=utf-8,name,email,products%0AJohn%20Smith,john@example.com,${
+                        encodeURIComponent((products.length > 0 ? products[0].item_number : "ABC123") + ";" + (products.length > 1 ? products[1].item_number : "DEF456"))
+                      }%0AJane%20Doe,jane@example.com,${
+                        encodeURIComponent(products.length > 2 ? products[2].item_number : "GHI789")
+                      }%0ABob%20Johnson,bob@example.com,%0ASarah%20Wilson,sarah@example.com,${
+                        encodeURIComponent(products.length > 0 ? products[0].item_number : "ABC123")
+                      }`}
                       download="customer_import_template.csv"
                       className="text-blue-600 hover:text-blue-800 text-sm inline-flex items-center"
                     >
@@ -264,16 +366,16 @@ export default function CustomerImport({ products }: CustomerImportProps) {
               <button
                 type="button"
                 onClick={() => {
-                  // Get some real product IDs from our available products
-                  const demoProductIds = products.slice(0, 6).map(p => p.id);
+                  // Get some real product item numbers from our available products
+                  const demoProductItemNumbers = products.slice(0, 6).map(p => p.item_number);
                   
-                  // Example data - we'll use real product IDs from our database
+                  // Example data - we'll use only valid product item numbers from our database
                   const exampleData = [
                     ["name", "email", "products"],
-                    ["John Smith", "john@example.com", demoProductIds.slice(0, 3).join(';')],
-                    ["Jane Doe", "jane@example.com", demoProductIds.slice(3, 5).join(';')],
+                    ["John Smith", "john@example.com", demoProductItemNumbers.slice(0, Math.min(3, demoProductItemNumbers.length)).join(';')],
+                    ["Jane Doe", "jane@example.com", demoProductItemNumbers.slice(0, Math.min(2, demoProductItemNumbers.length)).join(';')],
                     ["Bob Johnson", "bob@example.com", ""],
-                    ["Sarah Wilson", "sarah@example.com", `${demoProductIds[0]};${demoProductIds[5] || demoProductIds[0]}`]
+                    ["Sarah Wilson", "sarah@example.com", demoProductItemNumbers.length > 0 ? demoProductItemNumbers[0] : ""]
                   ];
                   
                   // Convert to CSV
@@ -322,6 +424,19 @@ export default function CustomerImport({ products }: CustomerImportProps) {
                 </div>
               </div>
               
+              {importRows.some(row => row.invalidProducts.length > 0) && (
+                <div className="bg-yellow-50 border border-yellow-100 rounded-lg p-4 mb-4 flex items-start">
+                  <AlertTriangle className="h-6 w-6 text-yellow-500 mr-3 mt-0.5 flex-shrink-0" />
+                  <div>
+                    <h3 className="font-medium text-yellow-800">Some Product Item Numbers Not Found</h3>
+                    <p className="mt-1 text-yellow-700">
+                      Some of the product item numbers in your CSV file don't match any products in your catalog.
+                      These products will be skipped during import. Check the table below for details.
+                    </p>
+                  </div>
+                </div>
+              )}
+              
               <div className="flex justify-end mb-2">
                 <button
                   onClick={() => {
@@ -358,15 +473,38 @@ export default function CustomerImport({ products }: CustomerImportProps) {
                         <td className="py-3 px-4">{row.name}</td>
                         <td className="py-3 px-4 text-gray-600">{row.email}</td>
                         <td className="py-3 px-4">
-                          {row.productIds.length > 0 ? (
-                            <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                              {row.productIds.length} product{row.productIds.length !== 1 ? 's' : ''}
-                            </span>
-                          ) : (
-                            <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700">
-                              No products
-                            </span>
-                          )}
+                          <div className="flex flex-col gap-1">
+                            {row.productIds.length > 0 ? (
+                              <button 
+                                onClick={() => setShowProductsModal({
+                                  rowIndex: index,
+                                  products: getProductDetailsByIds(row.productIds)
+                                })}
+                                className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 hover:bg-blue-200 transition-colors cursor-pointer"
+                              >
+                                {row.productIds.length} product{row.productIds.length !== 1 ? 's' : ''}
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                              </button>
+                            ) : (
+                              <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700">
+                                No products
+                              </span>
+                            )}
+                            
+                            {row.invalidProducts.length > 0 && (
+                              <div className="mt-1">
+                                <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                                  <AlertTriangle className="h-3 w-3 mr-1" />
+                                  {row.invalidProducts.length} invalid item{row.invalidProducts.length !== 1 ? 's' : ''}
+                                </span>
+                                <div className="text-xs text-gray-500 mt-1">
+                                  <span className="font-medium">Not found:</span> {row.invalidProducts.join(', ')}
+                                </div>
+                              </div>
+                            )}
+                          </div>
                         </td>
                       </tr>
                     ))}
@@ -444,24 +582,52 @@ export default function CustomerImport({ products }: CustomerImportProps) {
                         <td className="py-3 px-4">{row.name}</td>
                         <td className="py-3 px-4 text-gray-600">{row.email}</td>
                         <td className="py-3 px-4">
-                          {row.status === 'pending' && (
-                            <span className="inline-flex items-center text-gray-500">
-                              <span className="mr-2 h-2 w-2 bg-gray-200 rounded-full animate-pulse"></span>
-                              Pending
-                            </span>
-                          )}
-                          {row.status === 'success' && (
-                            <span className="inline-flex items-center text-green-600">
-                              <CheckCircle className="h-4 w-4 mr-1" />
-                              Success
-                            </span>
-                          )}
-                          {row.status === 'error' && (
-                            <span className="inline-flex items-center text-red-600">
-                              <XCircle className="h-4 w-4 mr-1" />
-                              Error: {row.message}
-                            </span>
-                          )}
+                          <div className="flex flex-col gap-1">
+                            {row.status === 'pending' && (
+                              <span className="inline-flex items-center text-gray-500">
+                                <span className="mr-2 h-2 w-2 bg-gray-200 rounded-full animate-pulse"></span>
+                                Pending
+                              </span>
+                            )}
+                            {row.status === 'success' && (
+                              <span className="inline-flex items-center text-green-600">
+                                <CheckCircle className="h-4 w-4 mr-1" />
+                                Success
+                              </span>
+                            )}
+                            {row.status === 'error' && (
+                              <span className="inline-flex items-center text-red-600">
+                                <XCircle className="h-4 w-4 mr-1" />
+                                Error: {row.message}
+                              </span>
+                            )}
+                            
+                            {row.productIds.length > 0 && (
+                              <div className="mt-1">
+                                <button 
+                                  onClick={() => setShowProductsModal({
+                                    rowIndex: index,
+                                    products: getProductDetailsByIds(row.productIds)
+                                  })}
+                                  className="inline-flex items-center px-2 py-0.5 rounded-md text-xs text-blue-800 bg-blue-50 border border-blue-100 hover:bg-blue-100 transition-colors cursor-pointer"
+                                >
+                                  <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 4v12l-4-2-4 2V4M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                  </svg>
+                                  View {row.productIds.length} product{row.productIds.length !== 1 ? 's' : ''}
+                                </button>
+                              </div>
+                            )}
+                            
+                            {row.invalidProducts.length > 0 && (
+                              <div className="mt-1">
+                                <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs text-yellow-800 bg-yellow-50 border border-yellow-100">
+                                  <AlertTriangle className="h-3 w-3 mr-1" />
+                                  {row.invalidProducts.length} product{row.invalidProducts.length !== 1 ? 's' : ''} skipped
+                                </span>
+                              </div>
+                            )}
+                          </div>
                         </td>
                       </tr>
                     ))}
@@ -487,7 +653,7 @@ export default function CustomerImport({ products }: CustomerImportProps) {
                 </div>
               </div>
               
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
                 <div className="bg-gray-50 rounded-lg p-4 border text-center">
                   <div className="text-3xl font-bold text-gray-800 mb-1">{importStats.total}</div>
                   <div className="text-sm text-gray-600">Total Customers</div>
@@ -512,10 +678,25 @@ export default function CustomerImport({ products }: CustomerImportProps) {
                     Failed Imports
                   </div>
                 </div>
+                
+                <div className={`rounded-lg p-4 border text-center ${
+                  importStats.skippedProducts > 0 ? 'bg-amber-50 border-amber-100' : 'bg-gray-50'
+                }`}>
+                  <div className={`text-3xl font-bold mb-1 ${
+                    importStats.skippedProducts > 0 ? 'text-amber-600' : 'text-gray-400'
+                  }`}>
+                    {importStats.skippedProducts}
+                  </div>
+                  <div className={`text-sm ${
+                    importStats.skippedProducts > 0 ? 'text-amber-700' : 'text-gray-500'
+                  }`}>
+                    Skipped Products
+                  </div>
+                </div>
               </div>
               
               {importStats.failed > 0 && (
-                <div className="bg-yellow-50 border border-yellow-100 rounded-lg p-4 mb-6 flex items-start">
+                <div className="bg-yellow-50 border border-yellow-100 rounded-lg p-4 mb-4 flex items-start">
                   <AlertTriangle className="h-6 w-6 text-yellow-500 mr-3 mt-0.5" />
                   <div>
                     <h3 className="font-medium text-yellow-800">Some Imports Failed</h3>
@@ -523,6 +704,20 @@ export default function CustomerImport({ products }: CustomerImportProps) {
                       There were {importStats.failed} customers that couldn't be imported. 
                       This might be due to duplicate email addresses or invalid data.
                       Please review the error messages in the table below.
+                    </p>
+                  </div>
+                </div>
+              )}
+              
+              {importStats.skippedProducts > 0 && (
+                <div className="bg-amber-50 border border-amber-100 rounded-lg p-4 mb-6 flex items-start">
+                  <AlertTriangle className="h-6 w-6 text-amber-500 mr-3 mt-0.5" />
+                  <div>
+                    <h3 className="font-medium text-amber-800">Some Products Were Skipped</h3>
+                    <p className="mt-1 text-amber-700">
+                      A total of {importStats.skippedProducts} product references couldn't be matched to your catalog.
+                      This happens when item numbers in the CSV don't match any products in your system.
+                      Check the table below to see which product numbers were invalid.
                     </p>
                   </div>
                 </div>
@@ -547,18 +742,49 @@ export default function CustomerImport({ products }: CustomerImportProps) {
                         <td className="py-3 px-4">{row.name}</td>
                         <td className="py-3 px-4 text-gray-600">{row.email}</td>
                         <td className="py-3 px-4">
-                          {row.status === 'success' && (
-                            <span className="inline-flex items-center text-green-600">
-                              <CheckCircle className="h-4 w-4 mr-1" />
-                              Success
-                            </span>
-                          )}
-                          {row.status === 'error' && (
-                            <span className="inline-flex items-center text-red-600">
-                              <XCircle className="h-4 w-4 mr-1" />
-                              {row.message}
-                            </span>
-                          )}
+                          <div className="flex flex-col gap-1">
+                            {row.status === 'success' && (
+                              <span className="inline-flex items-center text-green-600">
+                                <CheckCircle className="h-4 w-4 mr-1" />
+                                Success
+                              </span>
+                            )}
+                            {row.status === 'error' && (
+                              <span className="inline-flex items-center text-red-600">
+                                <XCircle className="h-4 w-4 mr-1" />
+                                {row.message}
+                              </span>
+                            )}
+                            
+                            {row.productIds.length > 0 && (
+                              <div className="mt-1">
+                                <button 
+                                  onClick={() => setShowProductsModal({
+                                    rowIndex: index,
+                                    products: getProductDetailsByIds(row.productIds)
+                                  })}
+                                  className="inline-flex items-center px-2 py-0.5 rounded-md text-xs text-blue-800 bg-blue-50 border border-blue-100 hover:bg-blue-100 transition-colors cursor-pointer"
+                                >
+                                  <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 4v12l-4-2-4 2V4M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                  </svg>
+                                  View {row.productIds.length} product{row.productIds.length !== 1 ? 's' : ''}
+                                </button>
+                              </div>
+                            )}
+                            
+                            {row.invalidProducts.length > 0 && (
+                              <div className="mt-1">
+                                <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs text-yellow-800 bg-yellow-50 border border-yellow-100">
+                                  <AlertTriangle className="h-3 w-3 mr-1" />
+                                  {row.invalidProducts.length} product{row.invalidProducts.length !== 1 ? 's' : ''} skipped
+                                </span>
+                                <div className="text-xs text-gray-500 mt-1">
+                                  <span className="font-medium">Not found:</span> {row.invalidProducts.join(', ')}
+                                </div>
+                              </div>
+                            )}
+                          </div>
                         </td>
                       </tr>
                     ))}
