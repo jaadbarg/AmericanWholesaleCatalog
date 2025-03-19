@@ -31,9 +31,9 @@ export default async function EnhancedSignIn() {
           </div>
           
           <div className="mt-20 max-w-md">
-            <h2 className="text-3xl font-bold mb-6">Premium Restaurant Supplies</h2>
+            <h2 className="text-3xl font-bold mb-6">Premium Wholesale Supplies</h2>
             <p className="text-blue-200 text-lg mb-8">
-              Serving Upstate NY's finest restaurants with high-quality wholesale products.
+              Serving Upstate NY's businesses with high-quality wholesale products.
             </p>
             
             <div className="space-y-4">

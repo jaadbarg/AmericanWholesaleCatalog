@@ -11,8 +11,8 @@ const redHat = Red_Hat_Display({
 })
 
 export const metadata: Metadata = {
-  title: "American Wholesalers Catalog | Premium Restaurant Supplies",
-  description: "Supplying Upstate NY's finest restaurants with premium wholesale products",
+  title: "American Wholesalers Catalog | Premium Wholesale Supplies",
+  description: "Supplying Upstate NY's businesses with premium wholesale products",
   icons: {
     icon: "/favicon.png",
     apple: "/favicon.png",
