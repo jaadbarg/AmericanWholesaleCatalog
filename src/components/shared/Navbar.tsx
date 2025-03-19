@@ -17,6 +17,7 @@ export function Navbar() {
   const supabase = createClientComponentClient()
   const clearCart = useCart((state) => state.clearCart)
   const [userEmail, setUserEmail] = useState<string | null>(null)
+  const [loading, setLoading] = useState(false)
 
   useEffect(() => {
     const getUser = async () => {
@@ -28,11 +29,21 @@ export function Navbar() {
 
   const handleSignOut = async () => {
     try {
-      await supabase.auth.signOut()
+      setLoading(true)
+      // Sign out from Supabase
+      const { error } = await supabase.auth.signOut()
+      if (error) throw error
+      
       clearCart()
-      router.push('/auth/signin')
+      
+      // Add a delay to ensure signout completes before redirect
+      setTimeout(() => {
+        // Force a hard refresh to ensure cookies are cleared
+        window.location.href = '/auth/signin'
+      }, 300)
     } catch (error) {
       console.error('Error signing out:', error)
+      setLoading(false)
     }
   }
 
@@ -146,9 +157,10 @@ export function Navbar() {
               onClick={handleSignOut}
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
+              disabled={loading}
               className="bg-blue-900 text-white px-4 py-2 rounded-lg text-sm font-semibold"
             >
-              Sign Out
+              {loading ? 'Signing out...' : 'Sign Out'}
             </motion.button>
           </div>
         </div>
@@ -203,9 +215,10 @@ export function Navbar() {
                 )}
                 <button
                   onClick={handleSignOut}
+                  disabled={loading}
                   className="w-full bg-blue-900 text-white px-4 py-2 rounded-lg text-sm font-semibold"
                 >
-                  Sign Out
+                  {loading ? 'Signing out...' : 'Sign Out'}
                 </button>
               </div>
             </div>

@@ -11,14 +11,18 @@
   "dependencies": {
     "@supabase/auth-helpers-nextjs": "^0.10.0",
     "@supabase/supabase-js": "^2.47.9",
+    "@types/uuid": "^10.0.0",
     "date-fns": "^4.1.0",
     "framer-motion": "^11.15.0",
+    "jspdf": "^3.0.1",
+    "jspdf-autotable": "^5.0.2",
     "lucide-react": "^0.468.0",
     "next": "15.1.1",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "resend": "^4.1.1",
     "supabase": "^2.1.1",
+    "uuid": "^11.1.0",
     "zustand": "^5.0.2"
   },
   "devDependencies": {

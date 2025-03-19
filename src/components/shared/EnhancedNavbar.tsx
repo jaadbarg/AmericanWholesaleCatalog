@@ -33,6 +33,7 @@ export function EnhancedNavbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false)
   const [scrolled, setScrolled] = useState(false)
+  const [loading, setLoading] = useState(false)
 
   const itemCount = items.reduce((acc, item) => acc + item.quantity, 0)
   
@@ -81,11 +82,21 @@ export function EnhancedNavbar() {
 
   const handleSignOut = async () => {
     try {
-      await supabase.auth.signOut()
+      setLoading(true)
+      // Sign out from Supabase
+      const { error } = await supabase.auth.signOut()
+      if (error) throw error
+      
       clearCart()
-      router.push('/auth/signin')
+      
+      // Add a delay to ensure signout completes before redirect
+      setTimeout(() => {
+        // Force a hard refresh to ensure cookies are cleared
+        window.location.href = '/auth/signin'
+      }, 300)
     } catch (error) {
       console.error('Error signing out:', error)
+      setLoading(false)
     }
   }
 
@@ -239,10 +250,11 @@ export function EnhancedNavbar() {
                         </Link>
                         <button
                           onClick={handleSignOut}
+                          disabled={loading}
                           className="flex w-full items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md"
                         >
                           <LogOut size={16} className="mr-2 text-american-navy-600" />
-                          Sign Out
+                          {loading ? 'Signing out...' : 'Sign Out'}
                         </button>
                       </div>
                     </motion.div>
@@ -334,10 +346,12 @@ export function EnhancedNavbar() {
                   variant="outline"
                   fullWidth
                   onClick={handleSignOut}
-                  icon={<LogOut size={18} />}
+                  icon={loading ? undefined : <LogOut size={18} />}
                   className="justify-center"
+                  isLoading={loading}
+                  disabled={loading}
                 >
-                  Sign Out
+                  {loading ? 'Signing out...' : 'Sign Out'}
                 </Button>
               </div>
             </div>

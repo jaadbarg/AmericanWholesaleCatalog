@@ -48,6 +48,7 @@ export async function POST(request: Request) {
       if (customerEmail) updateData.email = customerEmail;
       updateData.updated_at = new Date().toISOString();
 
+      // 1. Update customer table first
       const { error: updateError } = await adminSupabase
         .from('customers')
         .update(updateData)
@@ -58,6 +59,35 @@ export async function POST(request: Request) {
           { error: `Failed to update customer: ${updateError.message}` },
           { status: 500 }
         );
+      }
+      
+      // 2. If email is updated, synchronize with profiles table and auth system
+      if (customerEmail) {
+        // Update profiles table
+        const { error: profileUpdateError } = await adminSupabase
+          .from('profiles')
+          .update({ email: customerEmail })
+          .eq('customer_id', customerId);
+        
+        if (profileUpdateError) {
+          return NextResponse.json(
+            { error: `Failed to update profile: ${profileUpdateError.message}` },
+            { status: 500 }
+          );
+        }
+        
+        // Update Supabase Auth user
+        const { error: authUpdateError } = await adminSupabase.auth.admin.updateUserById(
+          customerId,
+          { email: customerEmail }
+        );
+        
+        if (authUpdateError) {
+          return NextResponse.json(
+            { error: `Failed to update auth user: ${authUpdateError.message}` },
+            { status: 500 }
+          );
+        }
       }
     }
 
