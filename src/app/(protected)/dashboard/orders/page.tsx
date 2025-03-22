@@ -89,7 +89,7 @@ export default async function OrdersPage() {
           </svg>
         </div>
         <p className="text-gray-700">
-          <span className="font-bold">Click on any order</span> to view its details, print the order, or place the same order again. Need help? Call us at <span className="text-american-navy-700 font-bold">(555) 123-4567</span>
+          <span className="font-bold">Click on any order</span> to view its details, print the order, or place the same order again. Need help? Call us at <span className="text-american-navy-700 font-bold">(315) 717-5854</span>
         </p>
       </div>
       

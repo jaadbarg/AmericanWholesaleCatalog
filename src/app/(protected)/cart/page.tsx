@@ -137,7 +137,7 @@ export default function CartPage() {
                     If you have questions about your order, please contact our customer service.
                   </p>
                   <div className="text-sm text-american-navy-700">
-                    Phone: (555) 123-4567
+                    Phone: (315) 717-5854
                   </div>
                 </div>
               </div>
