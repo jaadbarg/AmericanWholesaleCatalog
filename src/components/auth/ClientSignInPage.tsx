@@ -88,8 +88,8 @@ function SignInContent() {
             <div className="mt-8 text-sm text-center text-gray-500">
               <p>
                 Need help? Contact{' '}
-                <a href="mailto:support@americanwholesalers.com" className="text-gray-600 hover:text-gray-800">
-                  support@americanwholesalers.com
+                <a href="mailto:support@americanwholesalers.us" className="text-gray-600 hover:text-gray-800">
+                  support@americanwholesalers.us
                 </a>
               </p>
             </div>

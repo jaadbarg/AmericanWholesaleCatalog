@@ -110,7 +110,7 @@ export default async function EnhancedSignIn() {
           
           <div className="mt-8 text-center text-sm text-gray-500">
             <p>Need help accessing your account?</p>
-            <p className="mt-1">Contact us at <a href="mailto:support@americanwholesalers.com" className="text-blue-600 hover:text-blue-800">support@americanwholesalers.com</a></p>
+            <p className="mt-1">Contact us at <a href="mailto:support@americanwholesalers.us" className="text-blue-600 hover:text-blue-800">support@americanwholesalers.us</a></p>
           </div>
         </div>
       </div>

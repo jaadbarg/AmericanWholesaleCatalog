@@ -54,7 +54,48 @@ export async function POST(request: Request) {
       );
     }
 
-    // Delete customer record
+    // Delete or null out profiles reference to this customer
+    const { error: updateProfilesError } = await adminSupabase
+      .from('profiles')
+      .update({ customer_id: null })
+      .eq('customer_id', customerId);
+
+    if (updateProfilesError) {
+      return NextResponse.json(
+        { error: `Failed to update profiles: ${updateProfilesError.message}` },
+        { status: 500 }
+      );
+    }
+
+    // Check for any orders associated with this customer
+    const { data: orderData, error: orderCheckError } = await adminSupabase
+      .from('orders')
+      .select('id')
+      .eq('customer_id', customerId);
+
+    if (orderCheckError) {
+      return NextResponse.json(
+        { error: `Failed to check for orders: ${orderCheckError.message}` },
+        { status: 500 }
+      );
+    }
+
+    // If there are orders, update them to remove customer reference
+    if (orderData && orderData.length > 0) {
+      const { error: updateOrdersError } = await adminSupabase
+        .from('orders')
+        .update({ customer_id: null })
+        .eq('customer_id', customerId);
+
+      if (updateOrdersError) {
+        return NextResponse.json(
+          { error: `Failed to update orders: ${updateOrdersError.message}` },
+          { status: 500 }
+        );
+      }
+    }
+
+    // Now delete customer record
     const { error: deleteCustomerError } = await adminSupabase
       .from('customers')
       .delete()
@@ -67,7 +108,7 @@ export async function POST(request: Request) {
       );
     }
 
-    // Delete auth user (this also deletes the profile due to DB triggers/cascading)
+    // Delete auth user if it exists (this is separate from the profile in the public schema)
     const { error: deleteAuthError } = await adminSupabase.auth.admin.deleteUser(customerId);
 
     if (deleteAuthError) {

@@ -104,7 +104,7 @@ export function EnhancedSignInForm() {
       }
 
       // Check if user is admin and redirect accordingly
-      const isUserAdmin = normalizedEmail === 'admin@americanwholesalers.com';
+      const isUserAdmin = normalizedEmail === 'admin@americanwholesalers.us';
       const redirectPath = isUserAdmin ? '/admin' : '/products';
       
       // Navigate only once
