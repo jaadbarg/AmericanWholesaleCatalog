@@ -4,6 +4,7 @@
 import { useState } from 'react'
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
 import { motion } from 'framer-motion'
+import Link from 'next/link'
 import { Check, X, ChevronDown, AlertCircle, CheckCircle, XCircle, Package, Clock, Calendar, Mail, User } from 'lucide-react'
 import { sendOrderApprovalEmail } from '@/lib/utils/emailUtils'
 import { format } from 'date-fns'
@@ -176,7 +177,13 @@ export default function AdminOrderList({ initialOrders }: { initialOrders: Order
                       </div>
                       <div>
                         <h3 className="text-lg font-semibold flex items-center">
-                          Order #{order.id.slice(0, 8)}
+                          <Link 
+                            href={`/admin/orders/${encodeURIComponent(order.id)}`} 
+                            className="hover:text-blue-600 transition-colors"
+                            prefetch={true}
+                          >
+                            Order #{order.id.slice(0, 8)}
+                          </Link>
                           <span className="ml-2 px-2 py-0.5 bg-amber-100 text-amber-800 text-xs rounded-full">
                             Pending
                           </span>
@@ -243,18 +250,26 @@ export default function AdminOrderList({ initialOrders }: { initialOrders: Order
                         </button>
                       )}
                       
-                      {/* Details Toggle */}
-                      <button
-                        onClick={() => handleToggleExpand(order.id)}
-                        className="flex items-center gap-1 px-3 py-1.5 bg-gray-100 hover:bg-gray-200 rounded-md text-sm font-medium transition-colors"
-                      >
-                        <span>Details</span>
-                        <ChevronDown 
-                          className={`h-4 w-4 transition-transform ${
-                            expandedOrder === order.id ? 'rotate-180' : ''
-                          }`}
-                        />
-                      </button>
+                      {/* Details Toggle - dual use as link and expand */}
+                      <div className="flex space-x-2">
+                        <Link
+                          href={`/admin/orders/${encodeURIComponent(order.id)}`}
+                          className="flex items-center gap-1 px-3 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-md text-sm font-medium transition-colors"
+                        >
+                          <span>View Full Details</span>
+                        </Link>
+                        <button
+                          onClick={() => handleToggleExpand(order.id)}
+                          className="flex items-center gap-1 px-3 py-1.5 bg-gray-100 hover:bg-gray-200 rounded-md text-sm font-medium transition-colors"
+                        >
+                          <span>Quick View</span>
+                          <ChevronDown 
+                            className={`h-4 w-4 transition-transform ${
+                              expandedOrder === order.id ? 'rotate-180' : ''
+                            }`}
+                          />
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </div>

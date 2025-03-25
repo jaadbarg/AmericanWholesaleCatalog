@@ -4,19 +4,56 @@ import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { isAdmin } from '@/lib/utils/adminUtils';
 import Link from 'next/link';
-import { ArrowLeft, FileText, Package, Clock, User, Mail, Phone, Building, Check, X } from 'lucide-react';
+import { ArrowLeft, FileText, Package, Clock, User, Mail, Check, X } from 'lucide-react';
 import { format } from 'date-fns';
 export default async function AdminOrderDetailPage(props: any) {
   const { params } = props;
   // Clean up the ID - it might be URL encoded or have other format issues
   const rawOrderId = params.id;
-  const orderId = decodeURIComponent(rawOrderId);
-  
-  // Log the ID details for debugging
-  console.log('Raw Order ID from URL:', rawOrderId);
-  console.log('Decoded Order ID:', orderId);
+  let orderId = decodeURIComponent(rawOrderId);
   
   const supabase = createServerComponentClient({ cookies });
+  
+  console.log('Searching for order with ID or ID prefix:', orderId);
+  
+  // First attempt: try with the exact ID
+  let { data: exactOrder, error: exactOrderError } = await supabase
+    .from('orders')
+    .select('id')
+    .eq('id', orderId)
+    .maybeSingle();
+    
+  // If exact match fails, look for partial matches
+  if (!exactOrder) {
+    console.log('No exact match found, looking for orders with ID containing this prefix');
+    
+    // Get all orders to find the matching one by ID prefix
+    const { data: allOrders, error: allOrdersError } = await supabase
+      .from('orders')
+      .select('id');
+      
+    if (!allOrdersError && allOrders && allOrders.length > 0) {
+      console.log(`Found ${allOrders.length} orders to search through`);
+      
+      // Try simple prefix match first
+      let matchingOrder = allOrders.find(order => order.id.startsWith(orderId));
+      
+      // If no prefix match, try a contains match
+      if (!matchingOrder) {
+        matchingOrder = allOrders.find(order => order.id.includes(orderId));
+      }
+      
+      if (matchingOrder) {
+        // Use the full order ID
+        orderId = matchingOrder.id;
+        console.log('Found matching order ID:', orderId);
+      } else {
+        console.log('No matching order found for:', orderId);
+      }
+    }
+  } else if (exactOrder) {
+    console.log('Found exact order match for ID:', orderId);
+  }
 
   // Check if user is admin
   const { data: { session } } = await supabase.auth.getSession();
@@ -25,6 +62,17 @@ export default async function AdminOrderDetailPage(props: any) {
   }
 
   console.log('Attempting to fetch order with ID:', orderId);
+  console.log('Order ID type:', typeof orderId);
+  console.log('Order ID length:', orderId.length);
+
+  // Testing direct query with exact ID
+  const { data: orderExists, error: existsError } = await supabase
+    .from('orders')
+    .select('id')
+    .eq('id', 'c973dc5f-82fa-4413-9621-3fdfd21c2fcd')
+    .single();
+
+  console.log('Test query with hardcoded ID result:', JSON.stringify({ data: orderExists, error: existsError }));
 
   // Fetch order with customer & order items
   let orderResult;
@@ -39,7 +87,7 @@ export default async function AdminOrderDetailPage(props: any) {
         updated_at,
         delivery_date,
         notes,
-        customer:customers(id, name, email, phone, address, company),
+        customer:customers(id, name, email),
         order_items (id, quantity, product_id)
       `)
       .eq('id', orderId)
@@ -192,26 +240,7 @@ export default async function AdminOrderDetailPage(props: any) {
                       <Mail className="h-4 w-4 mr-1" />
                       {order.customer.email || 'No email provided'}
                     </div>
-                    {order.customer.phone && (
-                      <div className="mt-1 flex items-center text-sm text-gray-500">
-                        <Phone className="h-4 w-4 mr-1" />
-                        {order.customer.phone}
-                      </div>
-                    )}
                   </div>
-                  
-                  {order.customer.company && (
-                    <div className="flex items-start pt-2">
-                      <Building className="h-4 w-4 mr-1 mt-0.5 text-gray-400" />
-                      <p className="text-sm text-gray-600">{order.customer.company}</p>
-                    </div>
-                  )}
-                  
-                  {order.customer.address && (
-                    <div className="pt-2">
-                      <p className="text-sm text-gray-700 whitespace-pre-line">{order.customer.address}</p>
-                    </div>
-                  )}
                 </div>
               ) : (
                 <div className="bg-amber-50 text-amber-700 p-3 rounded-md text-sm">
