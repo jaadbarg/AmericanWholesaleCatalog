@@ -131,18 +131,33 @@ export async function updateProductNotes(customerId: string, productId: string, 
     return null
   }
 
-  const { error } = await supabase
-    .from('customer_products')
-    .update({ notes })
-    .eq('customer_id', customerId)
-    .eq('product_id', productId)
+  try {
+    // Call server API to update product notes using the admin API route
+    const response = await fetch('/api/admin/update-product-notes', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${process.env.NEXT_PUBLIC_ADMIN_API_KEY || 'test-api-key'}`
+      },
+      body: JSON.stringify({
+        customerId,
+        productId,
+        notes
+      })
+    });
+    
+    const result = await response.json();
+    
+    if (!response.ok) {
+      console.error('Error updating product notes via API:', result.error)
+      return { success: false, message: result.error || 'Failed to update product notes' }
+    }
 
-  if (error) {
-    console.error('Error updating product notes:', error)
-    return null
+    return { success: true }
+  } catch (error) {
+    console.error('Unexpected error in updateProductNotes:', error)
+    return { success: false, message: error instanceof Error ? error.message : 'Unknown error occurred' }
   }
-
-  return { success: true }
 }
 
 // Helper function to get all customers
