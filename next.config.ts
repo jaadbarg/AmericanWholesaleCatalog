@@ -14,6 +14,10 @@ const nextConfig: NextConfig = {
     // your project has ESLint errors.
     ignoreDuringBuilds: true,
   },
+  env: {
+    // Add Anthropic API key for Claude integration
+    ANTHROPIC_API_KEY: process.env.ANTHROPIC_API_KEY || "",
+  },
 };
 
 export default nextConfig;

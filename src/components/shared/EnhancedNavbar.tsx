@@ -189,23 +189,43 @@ export function EnhancedNavbar() {
             {/* Desktop right section */}
             <div className="hidden md:flex items-center space-x-2 flex-shrink-0">
               {!isAdminUser && (
-                <Link href="/cart">
-                  <motion.div
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    className="relative p-2 text-white hover:bg-american-navy-700 rounded-full"
-                  >
-                    <ShoppingCart className="h-5 w-5" />
-                    {itemCount > 0 && (
-                      <Badge
-                        variant="american"
-                        className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center rounded-full p-0"
-                      >
-                        {itemCount}
-                      </Badge>
-                    )}
-                  </motion.div>
-                </Link>
+                <div className="flex items-center space-x-2">
+                  <Link href="/products/ai-mode">
+                    <motion.div
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      className="flex items-center px-3 py-1.5 bg-gradient-to-r from-purple-600 to-blue-500 rounded-full text-white text-sm shadow-lg"
+                    >
+                      <svg className="h-4 w-4 mr-1.5 text-yellow-300" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M19 9L12 2L5 9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                        <path d="M12 2V17" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                        <path d="M5 22L5 22.01" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                        <path d="M9 22L9 22.01" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                        <path d="M13 22L13 22.01" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                        <path d="M17 22L17 22.01" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                      AI Mode
+                    </motion.div>
+                  </Link>
+                  
+                  <Link href="/cart">
+                    <motion.div
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      className="relative p-2 text-white hover:bg-american-navy-700 rounded-full"
+                    >
+                      <ShoppingCart className="h-5 w-5" />
+                      {itemCount > 0 && (
+                        <Badge
+                          variant="american"
+                          className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center rounded-full p-0"
+                        >
+                          {itemCount}
+                        </Badge>
+                      )}
+                    </motion.div>
+                  </Link>
+                </div>
               )}
 
               {/* User menu */}
@@ -266,23 +286,42 @@ export function EnhancedNavbar() {
             {/* Mobile menu button */}
             <div className="flex md:hidden items-center space-x-1 flex-shrink-0 ml-2">
               {!isAdminUser && (
-                <Link href="/cart">
-                  <motion.div
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    className="relative p-2 text-white hover:bg-american-navy-700 rounded-full"
-                  >
-                    <ShoppingCart className="h-5 w-5" />
-                    {itemCount > 0 && (
-                      <Badge
-                        variant="american"
-                        className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center rounded-full p-0"
-                      >
-                        {itemCount}
-                      </Badge>
-                    )}
-                  </motion.div>
-                </Link>
+                <>
+                  <Link href="/products/ai-mode">
+                    <motion.div
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      className="flex items-center p-1.5 bg-gradient-to-r from-purple-600 to-blue-500 rounded-full text-white"
+                    >
+                      <svg className="h-4 w-4 text-yellow-300" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M19 9L12 2L5 9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                        <path d="M12 2V17" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                        <path d="M5 22L5 22.01" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                        <path d="M9 22L9 22.01" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                        <path d="M13 22L13 22.01" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                        <path d="M17 22L17 22.01" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                    </motion.div>
+                  </Link>
+                  
+                  <Link href="/cart">
+                    <motion.div
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      className="relative p-2 text-white hover:bg-american-navy-700 rounded-full"
+                    >
+                      <ShoppingCart className="h-5 w-5" />
+                      {itemCount > 0 && (
+                        <Badge
+                          variant="american"
+                          className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center rounded-full p-0"
+                        >
+                          {itemCount}
+                        </Badge>
+                      )}
+                    </motion.div>
+                  </Link>
+                </>
               )}
               
               <motion.button
