@@ -177,17 +177,53 @@ export async function getAllCustomers() {
 
 // Helper function to get all products
 export async function getAllProducts() {
-  const { data, error } = await supabase
-    .from('products')
-    .select('*')
-    .order('item_number')
-
-  if (error) {
-    console.error('Error fetching products:', error)
-    return []
+  try {
+    // First, get a count of total products
+    const { count, error: countError } = await supabase
+      .from('products')
+      .select('*', { count: 'exact', head: true });
+    
+    if (countError) {
+      console.error('Error counting products:', countError);
+      return [];
+    }
+    
+    // Use pagination to fetch all products
+    const allProducts = [];
+    const pageSize = 1000; // Max rows per request
+    const pages = Math.ceil((count || 2500) / pageSize);
+    
+    // Fetch all pages in parallel
+    const pagePromises = [];
+    for (let i = 0; i < pages; i++) {
+      const from = i * pageSize;
+      const to = from + pageSize - 1;
+      
+      pagePromises.push(
+        supabase
+          .from('products')
+          .select('*')
+          .order('item_number')
+          .range(from, to)
+      );
+    }
+    
+    const results = await Promise.all(pagePromises);
+    
+    // Combine all results
+    results.forEach(result => {
+      if (result.error) {
+        console.error('Error fetching products page:', result.error);
+      } else if (result.data) {
+        allProducts.push(...result.data);
+      }
+    });
+    
+    return allProducts;
+  } catch (error) {
+    console.error('Error fetching all products:', error);
+    return [];
   }
-
-  return data
 }
 
 // Helper function to get customer's assigned products

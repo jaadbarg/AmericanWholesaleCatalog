@@ -22,15 +22,16 @@ type Product = {
   customerId: string
 }
 
-// Helper function to sort products
+// Helper function to sort products by item_number
 function sortProducts(products: Product[]) {
   return products.sort((a, b) => {
-    // Extract the alphabetic prefix and numeric parts
-    const aMatch = a.description.match(/^([A-Za-z]+)(\d+)/)
-    const bMatch = b.description.match(/^([A-Za-z]+)(\d+)/)
+    // Extract the alphabetic prefix and numeric parts from item_number
+    const aMatch = a.item_number.match(/^([A-Za-z]+)(\d+)/)
+    const bMatch = b.item_number.match(/^([A-Za-z]+)(\d+)/)
     
     if (!aMatch || !bMatch) {
-      return a.description.localeCompare(b.description)
+      // If either doesn't match the pattern, fall back to simple string comparison
+      return a.item_number.localeCompare(b.item_number)
     }
 
     const [, aPrefix, aNumber] = aMatch

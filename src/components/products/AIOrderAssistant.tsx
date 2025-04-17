@@ -45,7 +45,7 @@ export function AIOrderAssistant({
     { 
       id: 'welcome-message',
       role: 'assistant', 
-      content: `Hello ${customerName}! I'm your AI order assistant powered by Claude. I can help you find and order products using natural language.\n\nTry phrases like:\n- "I need paper cups and napkins for a party"\n- "Order the same as last time"\n- "Add 5 boxes of garbage bags and double the napkins from last time"\n- "What do you have in the plastic utensils category?"\n\nJust tell me what you need, and I'll find the right products for you!` 
+      content: `Hello ${customerName}! I'm your AI order assistant for American Wholesalers. I can help you find and order products using natural language.\n\nTry phrases like:\n- "What types of products are available to me?"\n- "Order the same as last time but make it 5x of each item"\n- "Show me your aluminum pan offerings"\n- "What do you have in the plastic utensils category?"\n\nJust tell me what you need, and I'll find the right products for you!` 
     }
   ])
   const [input, setInput] = useState('')

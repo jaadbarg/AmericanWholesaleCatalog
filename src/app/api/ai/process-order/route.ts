@@ -147,7 +147,6 @@ export async function POST(request: Request) {
       }
     }) || []
     
-    // API key (in production, this would be in environment variables)
     const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY
     
     if (!ANTHROPIC_API_KEY) {
@@ -187,11 +186,13 @@ Special Instructions:
 - If the customer mentions a product category rather than specific items, suggest the most relevant products from that category.
 - Pay attention to quantity expressions like "5 boxes of napkins" or "napkins x5".
 - If the customer asks for something not in the catalog, explain that you couldn't find it and suggest alternatives if appropriate.
-- If the customer asks about their order history, provide a helpful response and include any relevant products in the suggestedProducts array.
+- If the customer asks about their order history, provide a COMPLETE answer with all relevant information in a SINGLE response. DO NOT say "Let me check" or "One moment" without providing the actual information. Always include the full order details in your initial response.
+
+CRITICAL: ALWAYS give a complete answer in a single response. Never respond with just acknowledgments like "Let me check" or "One moment please" - this breaks the user experience. If you need to look up information, include both the acknowledgment AND the complete information in the SAME response.
 
 Always respond with valid JSON using this exact format:
 {
-  "aiResponse": "Your helpful response goes here",
+  "aiResponse": "Your complete and helpful response goes here with ALL requested information",
   "suggestedProducts": [
     {
       "id": "product-id-from-catalog",
@@ -203,7 +204,12 @@ Always respond with valid JSON using this exact format:
   ]
 }
 
-IMPORTANT: Do not include any additional text outside the JSON. If you cannot include products, use an empty array for suggestedProducts. Remember to escape quotes within the aiResponse string.`
+IMPORTANT: 
+- Provide COMPLETE answers in ONE response
+- Do not include any additional text outside the JSON
+- If there are no relevant products, use an empty array for suggestedProducts
+- Remember to escape quotes within the aiResponse string
+- Never respond with just "Let me check" or similar phrases without providing all the requested information`
 
       // Add previous chat history (if any)
       if (chatHistory && chatHistory.length > 0) {

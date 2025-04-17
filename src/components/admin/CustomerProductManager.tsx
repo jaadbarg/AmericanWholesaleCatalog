@@ -87,27 +87,61 @@ export function CustomerProductManager({
     checkCustomerProducts();
   }, [customerId, supabase]);
   
-  // Get unique categories from products
+  // Function to derive category from item number
+  const getCategoryFromItemNumber = (itemNumber: string): string => {
+    // Extract the prefix (first 2 characters)
+    const prefix = itemNumber.substring(0, 2).toUpperCase();
+    
+    // Handle special case for BASKET items
+    if (itemNumber.startsWith('BASKET')) {
+      return 'Baskets';
+    }
+    
+    // Map prefixes to categories
+    switch (prefix) {
+      case 'AF': return 'Air Fresheners';
+      case 'AL': return 'Aluminum Products';
+      case 'BA': return 'Baskets';
+      case 'BN': return 'Bins & Trash Containers';
+      case 'BX': return 'Boxes';
+      case 'CK': return 'Cake Boxes & Bakery Packaging';
+      case 'CP': return 'Cups';
+      case 'CS': return 'Cleaning Supplies';
+      case 'CT': return 'Containers';
+      case 'CU': return 'Cutlery & Utensils';
+      case 'DI': return 'Discounts';
+      case 'DS': return 'Dispensers';
+      case 'GL': return 'Gloves';
+      case 'JA': return 'Janitorial Supplies';
+      case 'JU': return 'Jugs & Mason Jars';
+      case 'LN': return 'Pan Liners';
+      case 'P0': return 'Paper Products';
+      case 'PB': return 'Paper Bags';
+      case 'PL': return 'Plates & Platters';
+      case 'PZ': return 'Pizza Supplies';
+      case 'ST': return 'Straws & Stirrers';
+      case 'TB': return 'Trash Bags';
+      case 'TR': return 'Trays';
+      case 'UT': return 'Utility Products';
+      case 'WP': return 'Wipes';
+      case 'WR': return 'Wraps & Films';
+      case 'WX': return 'Wax Paper Products';
+      default: return 'Miscellaneous';
+    }
+  };
+  
+  // Derive categories from item numbers instead of DB categories
   const categories = ['all', ...Array.from(new Set(
-    initialProducts
-      .map(p => p.category)
-      .filter(Boolean) as string[]
+    initialProducts.map(p => getCategoryFromItemNumber(p.item_number))
   ))].sort()
 
-  // Filter products based on search and category
+  // Filter products based on search, category, and special filters
   const filteredProducts = products.filter(product => {
     // First apply text search filter
     const matchesSearch = product.item_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
       product.description.toLowerCase().includes(searchTerm.toLowerCase())
     
-    // Then apply standard category filter (only for regular categories)
-    const isSpecialCategory = categoryFilter === '__assigned__' || 
-                             categoryFilter === '__unassigned__' || 
-                             categoryFilter === '__changes__';
-    
-    const matchesCategory = isSpecialCategory || categoryFilter === 'all' || product.category === categoryFilter
-    
-    // Finally apply special filters
+    // Apply special filters
     if (categoryFilter === '__assigned__') {
       // Show only assigned products
       return matchesSearch && product.selected;
@@ -121,7 +155,10 @@ export function CustomerProductManager({
       return matchesSearch && hasChanged;
     }
     
-    // Default case - apply standard search and category filters
+    // Then apply derived category filter
+    const derivedCategory = getCategoryFromItemNumber(product.item_number);
+    const matchesCategory = categoryFilter === 'all' || derivedCategory === categoryFilter;
+    
     return matchesSearch && matchesCategory;
   })
 
@@ -160,7 +197,7 @@ export function CustomerProductManager({
   const selectCategory = (category: string) => {
     setProducts(prev => 
       prev.map(p => 
-        p.category === category ? { ...p, selected: true } : p
+        getCategoryFromItemNumber(p.item_number) === category ? { ...p, selected: true } : p
       )
     )
   }
@@ -291,15 +328,19 @@ export function CustomerProductManager({
           </button>
           <div className="border-l border-gray-300 mx-1"></div>
           
-          {categories.filter(c => c !== 'all').map(category => (
-            <button
-              key={category}
-              onClick={() => selectCategory(category)}
-              className="px-3 py-1 text-xs font-medium bg-gray-200 hover:bg-gray-300 rounded transition-colors"
-            >
-              Select {category}
-            </button>
-          ))}
+          {/* Show select buttons for most common categories */}
+          {categories
+            .filter(c => c !== 'all' && c !== 'Miscellaneous')
+            .slice(0, 6) // Limit to 6 most important categories to avoid UI clutter
+            .map(category => (
+              <button
+                key={category}
+                onClick={() => selectCategory(category)}
+                className="px-3 py-1 text-xs font-medium bg-gray-200 hover:bg-gray-300 rounded transition-colors"
+              >
+                Select {category}
+              </button>
+            ))}
         </div>
         
         {/* Stats bar */}
@@ -479,11 +520,9 @@ export function CustomerProductManager({
                       </div>
                       <div className="text-sm text-gray-500 mt-1">{product.description}</div>
                       <div className="flex items-center mt-2">
-                        {product.category && (
-                          <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
-                            {product.category}
-                          </span>
-                        )}
+                        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
+                          {getCategoryFromItemNumber(product.item_number)}
+                        </span>
                         {assignedProducts.has(product.id) && (
                           <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-purple-100 text-purple-800">
                             Currently Assigned

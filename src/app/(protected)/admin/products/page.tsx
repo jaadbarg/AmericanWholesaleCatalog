@@ -28,19 +28,50 @@ export default function AdminProductsPage() {
       
       setUserEmail(session.user.email);
       
-      // Fetch all products
-      const { data, error } = await supabase
-        .from('products')
-        .select('*')
-        .order('item_number');
+      // Fetch all products using pagination to handle large catalogs
+      try {
+        // First, get a count of total products
+        const { count } = await supabase
+          .from('products')
+          .select('*', { count: 'exact', head: true });
 
-      if (error) {
+        // Use pagination to fetch all products
+        const allProducts: any = [];
+        const pageSize = 1000; // Max rows per request
+        const pages = Math.ceil((count || 2500) / pageSize);
+        
+        // Fetch all pages in parallel
+        const pagePromises = [];
+        for (let i = 0; i < pages; i++) {
+          const from = i * pageSize;
+          const to = from + pageSize - 1;
+          
+          pagePromises.push(
+            supabase
+              .from('products')
+              .select('*')
+              .order('item_number')
+              .range(from, to)
+          );
+        }
+        
+        const results = await Promise.all(pagePromises);
+        
+        // Combine all results
+        results.forEach(result => {
+          if (result.error) {
+            console.error('Error fetching products page:', result.error);
+          } else if (result.data) {
+            allProducts.push(...result.data);
+          }
+        });
+        
+        setProducts(allProducts);
+      } catch (error) {
         console.error('Error fetching products:', error);
-      } else {
-        setProducts(data || []);
+      } finally {
+        setLoading(false);
       }
-      
-      setLoading(false);
     };
     
     checkAuth();
