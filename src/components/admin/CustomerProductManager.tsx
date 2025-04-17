@@ -326,21 +326,6 @@ export function CustomerProductManager({
           >
             Deselect All
           </button>
-          <div className="border-l border-gray-300 mx-1"></div>
-          
-          {/* Show select buttons for most common categories */}
-          {categories
-            .filter(c => c !== 'all' && c !== 'Miscellaneous')
-            .slice(0, 6) // Limit to 6 most important categories to avoid UI clutter
-            .map(category => (
-              <button
-                key={category}
-                onClick={() => selectCategory(category)}
-                className="px-3 py-1 text-xs font-medium bg-gray-200 hover:bg-gray-300 rounded transition-colors"
-              >
-                Select {category}
-              </button>
-            ))}
         </div>
         
         {/* Stats bar */}
@@ -351,7 +336,7 @@ export function CustomerProductManager({
             </div>
             <div className="flex items-center gap-2">
               <span className="font-medium text-blue-600 flex items-center">
-                {selectedProducts} selected
+                {selectedProducts} product(s) selected for customer
               </span>
               
               {changesCount > 0 && (
