@@ -27,6 +27,7 @@ type SuggestedProduct = {
   quantity: number
   category?: string | null
   confidence: 'high' | 'medium' | 'low'
+  customerNote?: string
 }
 
 export function AIOrderAssistant({ 
@@ -359,6 +360,12 @@ export function AIOrderAssistant({
                         <p className="text-xs text-gray-600 line-clamp-2 mt-1">
                           {product.description}
                         </p>
+                        
+                        {product.customerNote && (
+                          <p className="text-xs text-amber-700 bg-amber-50 p-1.5 rounded mt-1.5 italic">
+                            <span className="font-medium">Note:</span> {product.customerNote}
+                          </p>
+                        )}
                         
                         {selectedProducts.has(product.id) && (
                           <div className="mt-2 flex items-center">

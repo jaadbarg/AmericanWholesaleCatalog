@@ -21,6 +21,7 @@ type SuggestedProduct = {
   quantity: number
   category?: string | null
   confidence: 'high' | 'medium' | 'low'
+  customerNote?: string
 }
 
 // State type for our graph
@@ -211,7 +212,8 @@ RESPONSE FORMAT INSTRUCTIONS:
       "item_number": "product-item-number",
       "description": "product description",
       "quantity": 1,
-      "confidence": "high"
+      "confidence": "high",
+      "customerNote": "Include any customer-specific notes here if available"
     }
   ]
 }
@@ -476,6 +478,7 @@ function findMatchingProducts(text: string, products: any[]): SuggestedProduct[]
         description: product.description,
         quantity: specificQuantity || 1,
         category: product.category,
+        customerNote: product.customerNote,
         confidence
       };
     })
