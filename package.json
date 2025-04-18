@@ -9,6 +9,8 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@langchain/core": "^0.3.45",
+    "@langchain/langgraph": "^0.2.64",
     "@supabase/auth-helpers-nextjs": "^0.10.0",
     "@supabase/supabase-js": "^2.47.9",
     "@types/uuid": "^10.0.0",
@@ -23,6 +25,7 @@
     "resend": "^4.1.1",
     "supabase": "^2.1.1",
     "uuid": "^11.1.0",
+    "zod": "^3.24.3",
     "zustand": "^5.0.2"
   },
   "devDependencies": {
